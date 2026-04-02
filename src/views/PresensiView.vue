@@ -7,8 +7,8 @@
 
     <!-- Matrix Presensi -->
     <BaseCard>
-      <div v-if="isLoading" class="flex-center" style="height: 200px">
-        <span class="loader" style="border-top-color: var(--c-primary); width: 40px; height: 40px;"></span>
+      <div v-if="isLoading">
+        <PageSkeleton variant="table" :count="8" />
       </div>
       
       <div v-else class="table-responsive animate-fade-in">
@@ -60,6 +60,7 @@ import ContactModal from '@/components/common/ContactModal.vue'
 import { meetingService } from '@/services/meetingService'
 import { presensiService } from '@/services/presensiService'
 import { profileService } from '@/services/profileService'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 
 const isLoading = ref(true)
 const meetings = ref([])

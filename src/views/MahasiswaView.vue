@@ -21,8 +21,11 @@
       <input type="text" v-model="searchQuery" placeholder="Cari nama atau NIM..." />
     </div>
 
+    <!-- Skeleton Loading -->
+    <PageSkeleton v-if="isLoading" variant="list" :count="8" />
+
     <!-- List -->
-    <div class="mahasiswa-list animate-fade-in" v-if="filteredList.length">
+    <div class="mahasiswa-list animate-fade-in" v-else-if="filteredList.length">
       <div 
         v-for="(mhs, index) in filteredList" 
         :key="mhs.id" 
@@ -51,6 +54,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { profileService } from '@/services/profileService'
 import { User, ChevronRight, Search } from 'lucide-vue-next'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 
 const router = useRouter()
 const searchQuery = ref('')

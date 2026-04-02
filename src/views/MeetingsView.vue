@@ -42,10 +42,15 @@
       <p style="font-size: 0.8rem; color: rgba(255,255,255,0.8); margin-top: 0.2rem;">Pilih sesi di bawah untuk lanjut belajar.</p>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex-center" style="height: 200px">
-      <span class="loader" style="border-top-color: var(--c-primary); width: 40px; height: 40px;"></span>
-    </div>
+    <!-- Skeleton Loading -->
+    <template v-if="isLoading">
+      <div class="desktop-only">
+        <PageSkeleton variant="cards" :count="6" />
+      </div>
+      <div class="mobile-only">
+        <PageSkeleton variant="mobile-list" :count="8" />
+      </div>
+    </template>
 
     <!-- Empty State -->
     <EmptyState 
@@ -187,6 +192,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import MeetingCard from '@/components/meeting/MeetingCard.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 
 const router = useRouter()
 const { isAdmin } = useAuth()

@@ -87,8 +87,59 @@
       </div>
 
       <!-- ==============================================
+           SKELETON LOADING (Muncul saat data belum siap)
+           ============================================== -->
+      <template v-if="isLoading">
+        <!-- Desktop Skeleton -->
+        <div class="bento-grid desktop-only">
+          <div class="bento-item bento-wide bento-card-glass" style="padding:1.5rem;">
+            <SkeletonLoader width="40%" height="1.2rem" />
+            <SkeletonLoader width="90%" height="0.9rem" style="margin-top:0.75rem;" />
+            <SkeletonLoader width="70%" height="0.9rem" style="margin-top:0.5rem;" />
+          </div>
+          <div class="bento-item bento-card-glass" style="padding:1.5rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.75rem;">
+            <SkeletonLoader width="54px" height="54px" radius="999px" />
+            <SkeletonLoader width="60%" height="2rem" />
+            <SkeletonLoader width="80%" height="0.8rem" />
+          </div>
+          <div class="bento-item bento-card-glass" style="padding:1.5rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.75rem;">
+            <SkeletonLoader width="54px" height="54px" radius="999px" />
+            <SkeletonLoader width="50%" height="2rem" />
+            <SkeletonLoader width="70%" height="0.8rem" />
+          </div>
+          <div class="bento-item bento-wide bento-card-glass" style="padding:1.5rem;">
+            <SkeletonLoader width="30%" height="0.8rem" />
+            <SkeletonLoader width="50%" height="2.2rem" style="margin-top:0.5rem;" />
+          </div>
+        </div>
+
+        <!-- Mobile Skeleton -->
+        <div class="mobile-stats mobile-only">
+          <SkeletonLoader width="40%" height="1rem" style="margin-bottom:1rem;" />
+          <div class="horizontal-scroll-container hide-scrollbar">
+            <div class="mobile-stat-card" style="background: linear-gradient(135deg, #e8e2d8, #f0ece4); border: none;">
+              <SkeletonLoader width="60%" height="0.8rem" style="margin-bottom:0.75rem; background: rgba(255,255,255,0.3);" />
+              <SkeletonLoader width="40%" height="1.8rem" style="background: rgba(255,255,255,0.4);" />
+            </div>
+            <div class="mobile-stat-card b-outline">
+              <SkeletonLoader width="50%" height="0.8rem" style="margin-bottom:0.75rem;" />
+              <SkeletonLoader width="60%" height="1.5rem" />
+            </div>
+            <div class="mobile-stat-card b-outline">
+              <SkeletonLoader width="50%" height="0.8rem" style="margin-bottom:0.75rem;" />
+              <SkeletonLoader width="60%" height="1.5rem" />
+            </div>
+          </div>
+          <div class="mobile-banner mt-2">
+            <SkeletonLoader width="70%" height="0.9rem" />
+          </div>
+        </div>
+      </template>
+
+      <!-- ==============================================
            BENTO DASHBOARD ADMIN & DOSEN (Desktop)
            ============================================== -->
+      <template v-else>
       <div v-if="isAdmin || isDosen" class="bento-grid desktop-only animate-fade-in">
         
         <!-- Tile 1: Status Aplikasi (Wide) -->
@@ -267,6 +318,7 @@
            <BookOpen :size="24" color="var(--c-primary)" />
         </div>
       </div>
+      </template>
   </div>
 </template>
 
@@ -278,6 +330,8 @@ import { dashboardService } from '@/services/dashboardService'
 import BaseButton from '@/components/common/BaseButton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
+import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
+
 const { roleName, isAdmin, isDosen, isMahasiswa, currentUser } = useAuth()
 
 const firstName = computed(() => {
@@ -285,7 +339,7 @@ const firstName = computed(() => {
   return currentUser.value.full_name.split(' ')[0]
 })
 
-const isLoading = ref(false)
+const isLoading = ref(true)
 const adminStats = ref({ avgAttendance: 0, totalStudents: 0, totalMeetings: 0 })
 const mhsStats = ref({ attendancePercent: 0, totalHadir: 0, missingResumes: 0 })
 

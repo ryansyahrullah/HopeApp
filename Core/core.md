@@ -1,6 +1,6 @@
 # HopeApp — Core System Documentation
 
-> **Versi:** 1.1.3  
+> **Versi:** 1.2.0  
 > **Terakhir diperbarui:** 3 April 2026  
 > **Stack:** Vue 3 + Vite + Supabase + Vercel  
 > **Tujuan:** Portal koordinasi kelas Bahasa Mandarin program HOPE — POLIBAN
@@ -821,6 +821,7 @@ input, textarea, [contenteditable="true"] {
 | 1.1.1 | 3 April 2026 | Router memory caching, optimistic UI dashboard, native mobile polish, vendor chunk splitting, versi label di login |
 | 1.1.2 | 3 April 2026 | Optimistic UI tanpa loading spinner, dokumentasi core.md diperbarui menyeluruh |
 | 1.1.3 | 3 April 2026 | Fix session stale saat kembali ke app (visibilitychange), versi ditampilkan di Settings |
+| 1.2.0 | 3 April 2026 | Skeleton loading di seluruh halaman (Dashboard, Meetings, Presensi, Mahasiswa). Komponen SkeletonLoader & PageSkeleton reusable |
 
 ---
 
