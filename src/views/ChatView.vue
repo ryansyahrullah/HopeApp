@@ -47,11 +47,6 @@
           </div>
 
           <div class="message-row" :class="{ 'own': isOwnMessage(msg) }">
-            <!-- Avatar untuk pesan orang lain -->
-            <div v-if="!isOwnMessage(msg)" class="msg-avatar" :style="{ backgroundColor: getAvatarColor(msg.profiles?.full_name) }">
-              {{ getInitial(msg.profiles?.full_name) }}
-            </div>
-
             <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg) }">
               <!-- Sender name (hanya untuk pesan orang lain) -->
               <span v-if="!isOwnMessage(msg)" class="sender-name" :style="{ color: getSenderColor(msg.profiles) }">
