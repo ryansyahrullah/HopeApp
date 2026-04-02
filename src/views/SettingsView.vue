@@ -39,6 +39,8 @@
         <ShieldCheck class="banner-icon" />
         <p>Gunakan kata sandi yang kuat dan unik untuk menjaga keamanan akun Anda.</p>
       </div>
+
+      <p class="app-version-label">HopeApp POLIBAN — Versi 1.1.3</p>
       
     </div>
 
@@ -554,5 +556,13 @@ const updatePassword = async () => {
   .detail-form-card {
     padding: 1.5rem 1rem;
   }
+}
+
+.app-version-label {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+  opacity: 0.6;
+  margin-top: 2rem;
 }
 </style>

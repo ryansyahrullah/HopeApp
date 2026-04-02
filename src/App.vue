@@ -17,8 +17,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { supabase } from '@/lib/supabase'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
@@ -26,6 +27,22 @@ const route = useRoute()
 
 // Sembunyikan sidebar dan header jika di halaman login atau register lengkap
 const isAuthRoute = computed(() => route.path === '/login' || route.path === '/complete-profile')
+
+// FIX: Saat user kembali ke app setelah minimize Chrome / pindah aplikasi,
+// sesi Supabase bisa basi (stale). Kita paksa refresh sesi agar menu tidak membeku.
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    supabase.auth.getSession() // Paksa refresh token sesi
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+})
 </script>
 
 <style scoped>
