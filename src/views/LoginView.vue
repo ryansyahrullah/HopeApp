@@ -80,7 +80,7 @@
         </button>
 
         <!-- Versi Aplikasi -->
-        <p class="app-version">Versi 1.3.0</p>
+        <p class="app-version">Versi 1.4.0</p>
       </div>
 
       <!-- MODE 1: LUPA SANDI - INPUT EMAIL -->

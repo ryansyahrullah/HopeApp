@@ -1,6 +1,6 @@
 # HopeApp — Core System Documentation
 
-> **Versi:** 1.3.0  
+> **Versi:** 1.4.0  
 > **Terakhir diperbarui:** 3 April 2026  
 > **Stack:** Vue 3 + Vite + Supabase + Vercel  
 > **Tujuan:** Portal koordinasi kelas Bahasa Mandarin program HOPE — POLIBAN
@@ -823,6 +823,7 @@ input, textarea, [contenteditable="true"] {
 | 1.1.3 | 3 April 2026 | Fix session stale saat kembali ke app (visibilitychange), versi ditampilkan di Settings |
 | 1.2.0 | 3 April 2026 | Skeleton loading di seluruh halaman (Dashboard, Meetings, Presensi, Mahasiswa). Komponen SkeletonLoader & PageSkeleton reusable |
 | 1.3.0 | 3 April 2026 | Halaman reset password dedicated (/reset-password). Form sandi baru + konfirmasi + toggle visibility + real-time match indicator. Fix feedback message mobile di login page |
+| 1.4.0 | 3 April 2026 | Integrasi Cloudflare Turnstile (invisible mode) di login dan reset password dengan server-side verification di Supabase. |
 
 ---
 
