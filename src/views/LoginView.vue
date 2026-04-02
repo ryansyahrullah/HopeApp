@@ -79,6 +79,8 @@
           <span class="btn-text">Google</span>
         </button>
 
+        <!-- Versi Aplikasi -->
+        <p class="app-version">Versi 1.1</p>
       </div>
 
       <!-- MODE 1: LUPA SANDI - INPUT EMAIL -->
@@ -453,6 +455,14 @@ const sendResetLink = async () => {
   font-weight: 600;
   font-size: 1.05rem;
   color: var(--c-text-main);
+}
+
+.app-version {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+  margin-top: 0.5rem;
+  opacity: 0.8;
 }
 
 /* Forgot Password Styles */
