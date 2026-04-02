@@ -38,5 +38,17 @@ export default defineConfig({
     alias: {
       '@': '/src'
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        // Pemisahan file (Chunk Splitting) untuk performa dan caching optimal
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-tiptap': ['@tiptap/vue-3', '@tiptap/starter-kit', '@tiptap/extension-placeholder']
+        }
+      }
+    }
   }
 })

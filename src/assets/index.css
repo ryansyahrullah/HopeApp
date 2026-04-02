@@ -57,6 +57,16 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* NATIVE APP FEEL FIXES */
+  -webkit-tap-highlight-color: transparent; /* Hilangkan flash biru saat tombol dipencet di HP */
+  user-select: none; /* Mencegah teks ter-blok/ter-highlight tidak sengaja saat menekan lama */
+  overscroll-behavior-y: none; /* Menghilangkan efek pantulan karet browser saat scroll kebablasan */
+}
+
+/* Kembalikan fungsi seleksi teks hanya untuk form input agar bisa diketik */
+input, textarea, [contenteditable="true"] {
+  user-select: auto;
 }
 
 /* ============================================
@@ -66,6 +76,7 @@ body {
 html, body {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  overscroll-behavior-y: none; /* Blokir pull-to-refresh bawaan browser */
 }
 html::-webkit-scrollbar, body::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge */
