@@ -1,0 +1,160 @@
+/* ============================================
+   HopeApp - POLIBAN | Light Chinese Theme
+   ============================================ */
+
+:root {
+  /* Color Palette - Oriental Vibe */
+  --c-primary: #C62828; /* China Red (Deep & elegant) */
+  --c-primary-hover: #D32F2F;
+  --c-secondary: #FF8F00; /* Imperial Gold / Warm Orange */
+  
+  --c-bg: #FDFBF7; /* Soft Rice Paper Cream */
+  --c-surface: #FFFFFF; /* Pure white for cards */
+  --c-border: #E6E0D4; /* Warm grey/cream border */
+  
+  --c-text-main: #2C3E50; /* Charcoal (Soft Black) */
+  --c-text-muted: #7F8C8D; /* Muted Slate */
+  
+  --c-success: #2E7D32; /* Jade Green */
+  --c-success-bg: #E8F5E9;
+  --c-danger: #C62828; /* China Red used for errors too */
+  --c-danger-bg: #FFEBEE;
+  --c-warning: #FF8F00; /* Gold */
+  --c-warning-bg: #FFF8E1;
+  --c-info: #0277BD; /* Water Blue */
+  --c-info-bg: #E1F5FE;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Noto Serif SC', serif; /* For headings or accents */
+  --font-cjk: 'Noto Sans SC', sans-serif; /* For Chinese characters */
+  --font-display: 'Shojumaru', cursive; /* Asian Brush/Calligraphy style for titles */
+  
+  /* Radii & Shadows */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  
+  /* Subtle, warm shadows typical of clean Asian UI design */
+  --shadow-sm: 0 2px 4px rgba(198, 40, 40, 0.04);
+  --shadow-md: 0 4px 12px rgba(198, 40, 40, 0.08);
+  --shadow-hover: 0 8px 24px rgba(198, 40, 40, 0.12);
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--c-bg);
+  color: var(--c-text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   GLOBAL SCROLLBAR STYLING
+   ============================================ */
+/* Sembunyikan scrollbar bawaan di body utama halaman, tapi tetap bisa di-scroll */
+html, body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+/* Kustomisasi scrollbar untuk elemen di dalam halaman (popup, tabel, daftar) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-text-muted);
+}
+
+
+/* Chinese Characters utility class */
+.zh {
+  font-family: var(--font-cjk);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.text-accent {
+  background: linear-gradient(135deg, var(--c-primary), var(--c-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Base Utilities */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Animations Disabled */
+@keyframes fadeIn {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  opacity: 1; /* user requested no animations */
+}
+
+ul {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ============================================
+   RESPONSIVE VISIBILITY
+   ============================================ */
+.desktop-only { display: flex; }
+.mobile-only { display: none !important; }
+
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: block !important; }
+  .mobile-only.is-flex { display: flex !important; }
+  .mobile-only.is-grid { display: grid !important; }
+}

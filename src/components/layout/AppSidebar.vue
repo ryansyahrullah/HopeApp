@@ -1,0 +1,201 @@
+<template>
+  <aside class="app-sidebar">
+    <div class="sidebar-brand">
+      <h1 class="zh font-display text-accent">HopeApp 希</h1>
+    </div>
+
+    <nav class="sidebar-nav">
+      <!-- Semua Role -->
+      <router-link to="/" class="nav-item">
+        <span class="icon"><LayoutDashboard :size="20" /></span>
+        <span class="nav-label">Dashboard</span>
+      </router-link>
+      
+      <router-link to="/meetings" class="nav-item hide-on-mobile">
+        <span class="icon"><CalendarDays :size="20" /></span>
+        <span class="nav-label">Pertemuan</span>
+      </router-link>
+
+      <template v-if="isAdmin || isDosen">
+
+        <router-link to="/mahasiswa" class="nav-item">
+          <span class="icon"><GraduationCap :size="20" /></span>
+          <span class="nav-label">Mahasiswa</span>
+        </router-link>
+
+        <router-link to="/presensi" class="nav-item hide-on-mobile">
+          <span class="icon"><ClipboardCheck :size="20" /></span>
+          <span class="nav-label">Rekap Presensi</span>
+        </router-link>
+
+        <router-link to="/resumes" class="nav-item hide-on-mobile">
+          <span class="icon"><FileText :size="20" /></span>
+          <span class="nav-label">Rekap Resume</span>
+        </router-link>
+
+        <router-link to="/summary" class="nav-item hide-on-mobile">
+          <span class="icon"><PieChart :size="20" /></span>
+          <span class="nav-label">Ringkasan</span>
+        </router-link>
+      </template>
+
+      <!-- Khusus Admin -->
+      <template v-if="isAdmin">
+        <router-link to="/users" class="nav-item hide-on-mobile">
+          <span class="icon"><UsersRound :size="20" /></span>
+          <span class="nav-label">Pengguna</span>
+        </router-link>
+      </template>
+
+      <!-- Khusus Mahasiswa -->
+      <template v-if="isMahasiswa">
+        <router-link to="/my-resumes" class="nav-item hide-on-mobile">
+          <span class="icon"><FileText :size="20" /></span>
+          <span class="nav-label">Resume</span>
+        </router-link>
+      </template>
+
+      <!-- Bottom Menu -->
+      <div class="bottom-menu">
+
+        <router-link to="/profile" class="nav-item">
+          <span class="icon"><User :size="20" /></span>
+          <span class="nav-label">Profile</span>
+        </router-link>
+      </div>
+    </nav>
+  </aside>
+</template>
+
+<script setup>
+import { LayoutDashboard, CalendarDays, ClipboardCheck, FileText, User, UsersRound, GraduationCap, PieChart, Settings } from 'lucide-vue-next'
+import { useAuth } from '@/composables/useAuth'
+
+const { isAdmin, isDosen, isMahasiswa } = useAuth()
+</script>
+
+<style scoped>
+.app-sidebar {
+  width: 250px;
+  background-color: var(--c-surface);
+  border-right: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.sidebar-brand {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.sidebar-brand h1 {
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+}
+
+.sidebar-nav {
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  color: var(--c-text-muted);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-item .icon {
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+.nav-item:hover {
+  background-color: var(--c-bg);
+  color: var(--c-text-main);
+  transform: translateX(4px);
+}
+
+.nav-item.router-link-active {
+  background-color: var(--c-danger-bg);
+  color: var(--c-primary);
+}
+
+.nav-item.router-link-active .icon {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .app-sidebar {
+    width: 100%;
+    height: 65px;
+    border-right: none;
+    border-top: 1px solid var(--c-border);
+    border-bottom: none;
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    z-index: 50;
+    flex-direction: row;
+    background-color: var(--c-surface);
+    padding: 0;
+  }
+  
+  .sidebar-brand {
+    display: none;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row;
+    padding: 0;
+    gap: 0;
+    width: 100%;
+    justify-content: space-around;
+    height: 100%;
+  }
+
+  .nav-item.hide-on-mobile {
+    display: none !important;
+  }
+  
+  .bottom-menu {
+    display: contents; /* Merges the profile link into the main nav flex flow */
+  }
+
+  .nav-item {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0;
+    border-radius: 0;
+  }
+  
+  .nav-label {
+    font-size: 0.75rem;
+  }
+  
+  .nav-item:hover {
+    transform: none;
+    background-color: transparent;
+  }
+
+  .nav-item.router-link-active {
+    background-color: transparent;
+    color: var(--c-primary);
+  }
+}
+</style>
