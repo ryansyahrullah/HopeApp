@@ -67,21 +67,23 @@ async function initAuth() {
 }
 
 // Auth actions
-async function signInWithEmail(email, password) {
+async function signInWithEmail(email, password, captchaToken) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
-    password
+    password,
+    options: { captchaToken }
   })
   if (error) throw error
   return data
 }
 
-async function signUpWithEmail(email, password, fullName) {
+async function signUpWithEmail(email, password, fullName, captchaToken) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { full_name: fullName }
+      data: { full_name: fullName },
+      captchaToken
     }
   })
   if (error) throw error
@@ -108,9 +110,10 @@ async function signOut() {
   localStorage.removeItem('hopeapp_active_role')
 }
 
-async function resetPassword(email) {
+async function resetPassword(email, captchaToken) {
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`
+    redirectTo: `${window.location.origin}/reset-password`,
+    captchaToken
   })
   if (error) throw error
   return data

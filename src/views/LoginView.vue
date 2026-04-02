@@ -161,7 +161,7 @@ const loginWithEmail = async () => {
       return
     }
 
-    await authSignIn(email.value, password.value)
+    await authSignIn(email.value, password.value, token)
     router.push('/')
   } catch (error) {
     resetTurnstile()
@@ -200,7 +200,7 @@ const sendResetLink = async () => {
       return
     }
 
-    await resetPassword(resetEmail.value)
+    await resetPassword(resetEmail.value, token)
     successMessage.value = `Link reset sandi telah dikirim ke ${resetEmail.value}. Cek inbox atau folder spam Anda.`
   } catch (error) {
     resetTurnstile()
