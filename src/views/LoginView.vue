@@ -115,7 +115,7 @@
     </div>
 
     <!-- Turnstile invisible widget (Moved outside dynamic container to prevent VDOM wipe) -->
-    <div ref="turnstileContainerRef" key="turnstile-app-widget" style="display:none;"></div>
+    <div ref="turnstileContainerRef" key="turnstile-app-widget" class="turnstile-container"></div>
   </div>
 </template>
 

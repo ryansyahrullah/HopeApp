@@ -92,15 +92,22 @@ export function useTurnstile() {
       window.turnstile.execute(widgetId)
     } catch(e) {
       console.warn("Turnstile execute error:", e)
+      window.turnstile.reset(widgetId)
       return ''
     }
 
     return new Promise((resolve) => {
+      let isResolved = false
+      
       const checkInterval = setInterval(() => {
         if (turnstileToken.value) {
           clearInterval(checkInterval)
           clearTimeout(timeout)
+          isResolved = true
+          
           if (turnstileToken.value === 'ERROR') {
+            window.turnstile.reset(widgetId)
+            turnstileToken.value = ''
             resolve('')
           } else {
             resolve(turnstileToken.value)
@@ -110,8 +117,13 @@ export function useTurnstile() {
 
       // Timeout fallback (8 seconds)
       const timeout = setTimeout(() => {
-        clearInterval(checkInterval)
-        resolve('')
+        if (!isResolved) {
+          clearInterval(checkInterval)
+          console.warn('[Turnstile] Execution timeout')
+          window.turnstile.reset(widgetId)
+          turnstileToken.value = ''
+          resolve('')
+        }
       }, 8000)
     })
   }
