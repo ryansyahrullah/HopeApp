@@ -86,16 +86,10 @@
         </div>
       </div>
 
-      <!-- State Loading untuk Data Statistik -->
-      <div v-if="isLoading" class="flex-center" style="height: 150px; width: 100%;">
-        <span class="loader" style="border-top-color: var(--c-primary); width: 40px; height: 40px;"></span>
-      </div>
-
-      <template v-else>
-        <!-- ==============================================
-             BENTO DASHBOARD ADMIN & DOSEN (Desktop)
-             ============================================== -->
-        <div v-if="isAdmin || isDosen" class="bento-grid desktop-only animate-fade-in">
+      <!-- ==============================================
+           BENTO DASHBOARD ADMIN & DOSEN (Desktop)
+           ============================================== -->
+      <div v-if="isAdmin || isDosen" class="bento-grid desktop-only animate-fade-in">
         
         <!-- Tile 1: Status Aplikasi (Wide) -->
         <div class="bento-item bento-wide bento-card-glass">
@@ -273,8 +267,6 @@
            <BookOpen :size="24" color="var(--c-primary)" />
         </div>
       </div>
-
-    </template>
   </div>
 </template>
 
@@ -293,9 +285,9 @@ const firstName = computed(() => {
   return currentUser.value.full_name.split(' ')[0]
 })
 
-const isLoading = ref(true)
-const adminStats = ref({})
-const mhsStats = ref({})
+const isLoading = ref(false)
+const adminStats = ref({ avgAttendance: 0, totalStudents: 0, totalMeetings: 0 })
+const mhsStats = ref({ attendancePercent: 0, totalHadir: 0, missingResumes: 0 })
 
 const fetchDashboardData = async () => {
   isLoading.value = true

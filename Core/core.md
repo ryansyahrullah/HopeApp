@@ -1,7 +1,7 @@
 # HopeApp — Core System Documentation
 
-> **Versi:** 1.0  
-> **Terakhir diperbarui:** 2 April 2026  
+> **Versi:** 1.1.2  
+> **Terakhir diperbarui:** 3 April 2026  
 > **Stack:** Vue 3 + Vite + Supabase + Vercel  
 > **Tujuan:** Portal koordinasi kelas Bahasa Mandarin program HOPE — POLIBAN
 
@@ -82,12 +82,15 @@ d:\HopeApp\
 ├── Core/
 │   └── core.md                    ← Dokumentasi ini
 ├── public/
+│   ├── favicon.png                ← Favicon (logo Barongsai)
+│   ├── logo-192x192.png           ← PWA icon 192px
+│   ├── logo-512x512.png           ← PWA icon 512px
 │   └── login-bg.png               ← Background gambar login page
 ├── src/
 │   ├── main.js                    ← Entry point Vue app
 │   ├── App.vue                    ← Root component (sidebar + header + router-view)
 │   ├── assets/
-│   │   └── index.css              ← Global CSS (design tokens, reset, utilities)
+│   │   └── index.css              ← Global CSS (design tokens, reset, utilities, native mobile fixes)
 │   ├── lib/
 │   │   └── supabase.js            ← Supabase client instance
 │   ├── composables/
@@ -96,11 +99,10 @@ d:\HopeApp\
 │   │   ├── meetingService.js      ← CRUD meetings via Supabase
 │   │   ├── presensiService.js     ← CRUD attendances via Supabase
 │   │   ├── resumeService.js       ← CRUD resumes via Supabase
+│   │   ├── profileService.js      ← CRUD profiles via Supabase
 │   │   └── dashboardService.js    ← Aggregate stats queries
 │   ├── router/
-│   │   └── index.js               ← Vue Router config + auth navigation guard
-│   ├── store/
-│   │   └── mockData.js            ← [LEGACY] Data simulasi, akan dihapus setelah migrasi
+│   │   └── index.js               ← Vue Router config + auth navigation guard (cached profile)
 │   ├── components/
 │   │   ├── common/                ← Reusable UI components
 │   │   │   ├── BaseButton.vue
@@ -122,8 +124,9 @@ d:\HopeApp\
 │   │       ├── MeetingResumeManager.vue ← Manager resume per sesi
 │   │       └── RichTextEditor.vue ← TipTap rich text editor
 │   └── views/                     ← Halaman-halaman utama
-│       ├── LoginView.vue          ← Login (email + Google OAuth + forgot password)
-│       ├── DashboardView.vue      ← Dashboard utama (bento grid stats)
+│       ├── LoginView.vue          ← Login (email + Google OAuth + forgot password + versi app)
+│       ├── CompleteProfileView.vue← Onboarding profil mahasiswa baru
+│       ├── DashboardView.vue      ← Dashboard utama (optimistic UI, bento grid stats)
 │       ├── MeetingsView.vue       ← List pertemuan (grid + mobile list)
 │       ├── MeetingDetailView.vue  ← Detail 1 pertemuan (materi + presensi + resume)
 │       ├── PresensiView.vue       ← Matriks rekap presensi semua mahasiswa
@@ -134,12 +137,13 @@ d:\HopeApp\
 │       ├── MahasiswaDetailView.vue← Detail 1 mahasiswa (data diri + WhatsApp)
 │       ├── UsersView.vue          ← Manajemen pengguna (admin only)
 │       ├── ProfileView.vue        ← Profil user yang sedang login
-│       └── SettingsView.vue       ← Pengaturan akun (email, password)
+│       └── SettingsView.vue       ← Pengaturan akun (email, password, Supabase Auth)
 ├── supabase/
 │   └── schema.sql                 ← Database schema untuk Supabase SQL Editor
 ├── .env.example                   ← Template environment variables
+├── index.html                     ← Entry HTML (PWA meta tags, viewport lock, theme-color)
 ├── package.json
-├── vite.config.js
+├── vite.config.js                 ← Vite config (PWA plugin, chunk splitting)
 └── vercel.json                    ← Konfigurasi deploy Vercel (SPA rewrite)
 ```
 
@@ -222,24 +226,42 @@ const isMahasiswa = computed(() => profile.value?.roles?.includes('mahasiswa'))
 - Jika **OFF**: user baru yang mencoba signup akan **ditolak langsung** (blocked di frontend)
 - Admin pertama: `syahrullahryan@gmail.com`
 
-### 4.6 Navigation Guard (Router)
+### 4.6 Navigation Guard (Router) — Optimized
 
 ```javascript
 // router/index.js
 router.beforeEach(async (to, from, next) => {
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  if (to.path === '/login') {
-    // Jika sudah login, redirect ke dashboard
-    return session ? next('/') : next()
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (to.path === '/login') {
+      return session ? next('/') : next()
+    }
+    if (!session) return next('/login')
+
+    // OPTIMASI: Gunakan profile dari memory cache (useAuth),
+    // hanya fetch DB jika cache kosong (pertama kali / refresh browser)
+    const { profile } = useAuth()
+    let currentProfile = profile.value
+    if (!currentProfile) {
+      const { data } = await supabase
+        .from('profiles').select('is_registered, roles')
+        .eq('id', session.user.id).single()
+      currentProfile = data
+    }
+
+    // Redirect onboarding mahasiswa baru
+    if (currentProfile?.roles?.includes('mahasiswa') && ...) { ... }
+    
+    next()
+  } catch (err) {
+    // Anti-stuck: Wajib jalankan next apa pun yang terjadi
+    next()
   }
-  
-  // Halaman lain butuh auth
-  if (!session) return next('/login')
-  
-  next()
 })
 ```
+
+**Penting:** Navigation guard menggunakan **memory caching** dari `useAuth()` sehingga perpindahan menu INSTAN tanpa menunggu response Supabase. Fetch database hanya terjadi 1x saat pertama kali load / refresh browser.
 
 ---
 
@@ -426,6 +448,7 @@ getMahasiswaStats(studentId) → Aggregate: attendance %, hadir count, missing r
 - **Google OAuth**: Tombol "Google" → `supabase.auth.signInWithOAuth({ provider: 'google' })`
 - **Forgot Password**: Input email → `supabase.auth.resetPasswordForEmail()` → link reset dikirim ke email
 - **Cek Registrasi**: Jika toggle registrasi OFF, signup diblokir
+- **Versi Aplikasi**: Menampilkan teks "Versi X.X.X" di bawah tombol Google
 - **UI**: Split layout (banner kiri + form kanan), mobile responsive (banner atas + form bawah rounded)
 
 ### 7.2 DashboardView (`/`)
@@ -433,6 +456,7 @@ getMahasiswaStats(studentId) → Aggregate: attendance %, hadir count, missing r
 - **Admin/Dosen**: Bento grid stats (rata kehadiran %, jumlah mahasiswa, total sesi), app shortcuts
 - **Mahasiswa**: Tingkat kehadiran %, resume tertunda, link ke materi terbaru
 - **Mobile**: Wallet-style header (gradient merah), horizontal scroll stat cards, app shortcuts grid 4 kolom
+- **Optimistic UI**: Shortcut menu dan stat cards muncul INSTAN dengan nilai default 0, lalu angka asli muncul reaktif saat data Supabase tiba. Tidak ada loading spinner yang memblokir konten.
 
 ### 7.3 MeetingsView (`/meetings`)
 
@@ -679,6 +703,7 @@ Connect GitHub repo → setiap push ke branch `main` akan auto-deploy.
 | `xlsx` | ^0.18 | Export data ke Excel (download rekap) |
 | `vite` | ^6.3 | Build tool & dev server |
 | `@vitejs/plugin-vue` | ^5.2 | Vite plugin untuk Vue SFC |
+| `vite-plugin-pwa` | ^0.22 | Progressive Web App support (service worker, manifest, offline cache) |
 
 ---
 
@@ -693,6 +718,11 @@ Connect GitHub repo → setiap push ke branch `main` akan auto-deploy.
 | **Registration Toggle** | Disimpan di tabel `system_settings`. Dibaca saat signup untuk menentukan apakah user baru diizinkan |
 | **SPA on Vercel** | Single Page Application, semua routing handled di client. Vercel rewrite semua path ke `/` |
 | **No SSR** | Tidak pakai server-side rendering. Semua data di-fetch client-side dari Supabase |
+| **PWA (Progressive Web App)** | Mendukung instalasi di homescreen HP dengan ikon Barongsai. Service worker untuk offline cache |
+| **Router Memory Caching** | Navigation guard menggunakan cache lokal dari `useAuth()` agar perpindahan menu instan tanpa fetch DB berulang |
+| **Optimistic UI** | Dashboard menampilkan layout + nilai default langsung tanpa loading spinner. Data asli mengisi secara reaktif |
+| **Native Mobile Polish** | Viewport lock (no zoom), tap highlight disabled, user-select disabled (kecuali input). Terasa seperti app native |
+| **Vendor Chunk Splitting** | Build di-split jadi chunk terpisah: vue, supabase, tiptap. Browser cache chunk vendor secara permanen |
 
 ---
 
@@ -713,6 +743,83 @@ Connect GitHub repo → setiap push ke branch `main` akan auto-deploy.
 6. Set Site URL di Authentication → URL Configuration:
    - Site URL: `https://your-app.vercel.app` (atau `http://localhost:3000` saat dev)
    - Redirect URLs: tambahkan `http://localhost:3000`, `https://your-app.vercel.app`
+
+---
+
+## 15. PWA (Progressive Web App)
+
+### 15.1 Konfigurasi (vite.config.js)
+
+```javascript
+import { VitePWA } from 'vite-plugin-pwa'
+
+VitePWA({
+  registerType: 'autoUpdate',
+  includeAssets: ['favicon.png', 'logo-192x192.png', 'logo-512x512.png'],
+  manifest: {
+    name: 'HopeApp POLIBAN',
+    short_name: 'HopeApp',
+    description: 'Portal Koordinasi Kelas Bahasa Mandarin Program HOPE.',
+    theme_color: '#c62828',
+    background_color: '#ffffff',
+    display: 'standalone',
+    icons: [
+      { src: 'logo-192x192.png', sizes: '192x192', type: 'image/png' },
+      { src: 'logo-512x512.png', sizes: '512x512', type: 'image/png' }
+    ]
+  }
+})
+```
+
+### 15.2 Logo & Branding
+
+- **Desain**: Ikon Barongsai (Lion Dance) minimalis bergaya lucu, warna merah & emas
+- **File**: `favicon.png`, `logo-192x192.png`, `logo-512x512.png` di folder `public/`
+- **HTML Meta Tags** (index.html):
+  - `<meta name="theme-color" content="#c62828">` — warna status bar HP
+  - `<link rel="apple-touch-icon" href="/logo-192x192.png">` — ikon iOS
+  - `<meta name="viewport" ... user-scalable=no, viewport-fit=cover>` — kunci zoom
+
+### 15.3 Build Optimization (Chunk Splitting)
+
+```javascript
+build: {
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        'vendor-vue': ['vue', 'vue-router'],
+        'vendor-supabase': ['@supabase/supabase-js'],
+        'vendor-tiptap': ['@tiptap/vue-3', '@tiptap/starter-kit', '@tiptap/extension-placeholder']
+      }
+    }
+  }
+}
+```
+
+Browser menyimpan (cache) chunk vendor secara permanen. Jika hanya kode aplikasi yang berubah, pengguna tidak perlu mengunduh ulang library besar.
+
+### 15.4 Native Mobile CSS (index.css)
+
+```css
+body {
+  -webkit-tap-highlight-color: transparent; /* Hilangkan flash biru saat tap */
+  user-select: none;                        /* Cegah select teks tidak sengaja */
+}
+input, textarea, [contenteditable="true"] {
+  user-select: auto; /* Kembalikan select untuk form input */
+}
+```
+
+---
+
+## 16. Changelog
+
+| Versi | Tanggal | Perubahan |
+|-------|---------|----------|
+| 1.0 | 2 April 2026 | Rilis awal: full Supabase migration, multi-role, semua modul CRUD |
+| 1.1 | 2 April 2026 | PWA support, logo Barongsai, favicon, production cleanup |
+| 1.1.1 | 3 April 2026 | Router memory caching, optimistic UI dashboard, native mobile polish, vendor chunk splitting, versi label di login |
+| 1.1.2 | 3 April 2026 | Optimistic UI tanpa loading spinner, dokumentasi core.md diperbarui menyeluruh |
 
 ---
 
