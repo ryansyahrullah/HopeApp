@@ -111,20 +111,26 @@ const router = createRouter({
 // Navigation guard: redirect to /login if not authenticated
 router.beforeEach(async (to, from, next) => {
   try {
+    const authState = useAuth()
+    let currentSession = authState.session.value
+    
+    // Fail-safe jika navigation guard jalan SEBELUM initAuth selesai
+    if (!authState.isAuthReady.value) {
+      const { data } = await supabase.auth.getSession()
+      currentSession = data.session
+    }
+
     // Allow login page without auth (redirect to home if already logged in)
     if (to.meta.requiresAuth === false) {
       // Only redirect away from login page if session exists
-      // /reset-password must stay accessible even with recovery session
-      if (to.path === '/login') {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) return next('/')
+      if (to.path === '/login' && currentSession) {
+        return next('/')
       }
       return next()
     }
 
     // All other pages require auth
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    if (!currentSession) {
       return next('/login')
     }
 
@@ -138,7 +144,7 @@ router.beforeEach(async (to, from, next) => {
       const { data, error } = await supabase
         .from('profiles')
         .select('is_registered, roles')
-        .eq('id', session.user.id)
+        .eq('id', currentSession.user.id)
         .single()
 
       if (error) {

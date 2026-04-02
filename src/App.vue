@@ -31,21 +31,6 @@ const isAuthRoute = computed(() => ['/login', '/complete-profile', '/reset-passw
 // Halaman fullscreen (tanpa sidebar/header, tapi bukan auth)
 const isFullscreenRoute = computed(() => ['/chat'].includes(route.path))
 
-// FIX: Saat user kembali ke app setelah minimize Chrome / pindah aplikasi,
-// sesi Supabase bisa basi (stale). Kita paksa refresh sesi agar menu tidak membeku.
-const handleVisibilityChange = () => {
-  if (document.visibilityState === 'visible') {
-    supabase.auth.getSession() // Paksa refresh token sesi
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-})
 </script>
 
 <style scoped>
