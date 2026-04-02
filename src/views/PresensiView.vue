@@ -1,8 +1,14 @@
 <template>
   <div class="presensi-view">
-    <div class="page-header mb-2">
-      <h2 class="page-title">Rekap Presensi Lengkap</h2>
-      <p class="page-subtitle">Matriks kehadiran seluruh mahasiswa pada setiap sesi pertemuan.</p>
+    <div class="page-header mb-2" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+      <div>
+        <h2 class="page-title">Rekap Presensi Lengkap</h2>
+        <p class="page-subtitle">Matriks kehadiran seluruh mahasiswa pada setiap sesi pertemuan.</p>
+      </div>
+      <BaseButton @click="exportToExcel" :disabled="isLoading || students.length === 0" variant="outline">
+        <Download :size="16" style="margin-right: 0.5rem;" />
+        Export Excel
+      </BaseButton>
     </div>
 
     <!-- Matrix Presensi -->
@@ -61,6 +67,9 @@ import { meetingService } from '@/services/meetingService'
 import { presensiService } from '@/services/presensiService'
 import { profileService } from '@/services/profileService'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import BaseButton from '@/components/common/BaseButton.vue'
+import { Download } from 'lucide-vue-next'
+import * as XLSX from 'xlsx'
 
 const isLoading = ref(true)
 const meetings = ref([])
@@ -106,6 +115,50 @@ const getPresensiIcon = (studentId, meetingId) => {
   
   if (record.status === 'hadir') return '<span style="color:var(--c-success); font-weight:bold;">H</span>'
   return '<span style="color:var(--c-danger); font-weight:bold;">A</span>'
+}
+
+const exportToExcel = () => {
+  const exportData = students.value.map(student => {
+    const row = {
+      'Nama': student.full_name,
+      'NIM': student.nim,
+      'No. Anggota': student.student_number || '-'
+    }
+    
+    sortedMeetings.value.forEach(meeting => {
+      const record = presensiRecords.value.find(r => r.student_id === student.id && r.meeting_id === meeting.id)
+      let statusStr = '-'
+      if (record && record.status) {
+        if (record.status === 'hadir') statusStr = 'Hadir'
+        else if (record.status === 'alpa') statusStr = 'Alpa'
+        else if (record.status === 'sakit') statusStr = 'Sakit'
+        else if (record.status === 'izin') statusStr = 'Izin'
+      }
+      row[`Sesi ${meeting.meeting_number}`] = statusStr
+    })
+    
+    row['Total Alpa'] = student.total_alpa
+    return row
+  })
+
+  // Format header styles by manually building worksheet or just let util json_to_sheet do it
+  const ws = XLSX.utils.json_to_sheet(exportData)
+  
+  // Set col widths
+  ws['!cols'] = [
+    { wch: 30 }, // Nama
+    { wch: 15 }, // NIM
+    { wch: 15 }, // No. Anggota
+  ]
+  // Add width for each meeting col
+  sortedMeetings.value.forEach(() => {
+    ws['!cols'].push({ wch: 8 })
+  })
+  ws['!cols'].push({ wch: 12 }) // Total alpa
+  
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, "Rekap Presensi")
+  XLSX.writeFile(wb, "Rekap_Presensi_HopeApp.xlsx")
 }
 
 onMounted(() => {

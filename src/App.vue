@@ -52,6 +52,7 @@ onUnmounted(() => {
 .app-layout {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--c-bg);
 }
 
@@ -91,6 +92,9 @@ onUnmounted(() => {
 
 .fullscreen-content {
   padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {

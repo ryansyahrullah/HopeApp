@@ -87,7 +87,6 @@
         <textarea
           ref="inputField"
           v-model="newMessage"
-          @keydown.enter.exact.prevent="sendMessage"
           placeholder="Ketik pesan..."
           rows="1"
           maxlength="1000"
@@ -370,8 +369,10 @@ const getSenderColor = (profile) => {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  flex: 1;
+  height: 100%;
   background-color: var(--c-bg);
+  overflow: hidden;
 }
 
 /* ========== HEADER ========== */
@@ -704,9 +705,6 @@ const getSenderColor = (profile) => {
 
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
-  .chat-page {
-    height: 100vh;
-  }
 
   .chat-messages {
     padding: 1rem 0.85rem 0.5rem;
