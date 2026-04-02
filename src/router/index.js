@@ -60,6 +60,17 @@ const routes = [
     component: () => import('../views/MahasiswaView.vue')
   },
   {
+    path: '/feedback',
+    name: 'Feedback',
+    component: () => import('../views/FeedbackView.vue')
+  },
+  {
+    path: '/masukan',
+    name: 'PublicFeedback',
+    component: () => import('../views/PublicFeedbackView.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/mahasiswa/:id',
     name: 'MahasiswaDetail',
     component: () => import('../views/MahasiswaDetailView.vue')

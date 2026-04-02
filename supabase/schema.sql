@@ -179,3 +179,27 @@ CREATE POLICY "settings_update_admin"
 
 CREATE POLICY "settings_delete_admin"
   ON system_settings FOR DELETE TO authenticated USING (public.has_role('admin'));
+
+-- ==============================================
+-- 6. Feedbacks (Masukan Sistem)
+-- ==============================================
+CREATE TABLE IF NOT EXISTS feedbacks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  author_name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE feedbacks ENABLE ROW LEVEL SECURITY;
+
+-- Select: Bisa diakses oleh siapapun untuk halaman publik (termasuk anonim dan terautentikasi)
+CREATE POLICY "feedbacks_select_public"
+  ON feedbacks FOR SELECT USING (true);
+
+-- Insert: Hanya bisa oleh mahasiswa yang login
+CREATE POLICY "feedbacks_insert_mahasiswa"
+  ON feedbacks FOR INSERT TO authenticated WITH CHECK (public.has_role('mahasiswa'));
+
+-- Delete: Hanya bisa dihapus oleh admin
+CREATE POLICY "feedbacks_delete_admin"
+  ON feedbacks FOR DELETE TO authenticated USING (public.has_role('admin'));

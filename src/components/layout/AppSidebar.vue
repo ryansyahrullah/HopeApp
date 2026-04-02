@@ -16,6 +16,11 @@
         <span class="nav-label">Pertemuan</span>
       </router-link>
 
+      <router-link to="/feedback" class="nav-item hide-on-mobile">
+        <span class="icon"><MessageSquare :size="20" /></span>
+        <span class="nav-label">Masukan</span>
+      </router-link>
+
       <template v-if="isAdmin || isDosen">
 
         <router-link to="/mahasiswa" class="nav-item">
@@ -68,7 +73,7 @@
 </template>
 
 <script setup>
-import { LayoutDashboard, CalendarDays, ClipboardCheck, FileText, User, UsersRound, GraduationCap, PieChart, Settings } from 'lucide-vue-next'
+import { LayoutDashboard, CalendarDays, ClipboardCheck, FileText, User, UsersRound, GraduationCap, PieChart, Settings, MessageSquare } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 
 const { isAdmin, isDosen, isMahasiswa } = useAuth()

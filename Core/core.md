@@ -1,6 +1,6 @@
 # HopeApp — Core System Documentation
 
-> **Versi:** 1.4.0  
+> **Versi:** 1.5.0  
 > **Terakhir diperbarui:** 3 April 2026  
 > **Stack:** Vue 3 + Vite + Supabase + Vercel  
 > **Tujuan:** Portal koordinasi kelas Bahasa Mandarin program HOPE — POLIBAN
@@ -28,16 +28,17 @@ HopeApp adalah web application untuk mengelola kelas Bahasa Mandarin di POLIBAN.
 │                                                         │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
 │  │  Views   │──│Components│──│  Router  │              │
-│  │ (13 hal) │  │(reusable)│  │(vue-rtr) │              │
+│  │ (15 hal) │  │(reusable)│  │(vue-rtr) │              │
 │  └────┬─────┘  └──────────┘  └──────────┘              │
 │       │                                                 │
 │  ┌────▼─────────────────────────────┐                   │
 │  │       Service Layer (4 files)    │                   │
 │  │  meetingService.js               │                   │
 │  │  presensiService.js              │                   │
-│  │  resumeService.js                │                   │
-│  │  dashboardService.js             │                   │
-│  └────┬─────────────────────────────┘                   │
+│  │  resumeService.js              │                   │
+│  │  dashboardService.js           │                   │
+│  │  feedbackService.js            │                   │
+│  └────┬───────────────────────────┘                   │
 │       │                                                 │
 │  ┌────▼─────────────────────────────┐                   │
 │  │       Composable: useAuth.js     │                   │
@@ -100,7 +101,8 @@ d:\HopeApp\
 │   │   ├── presensiService.js     ← CRUD attendances via Supabase
 │   │   ├── resumeService.js       ← CRUD resumes via Supabase
 │   │   ├── profileService.js      ← CRUD profiles via Supabase
-│   │   └── dashboardService.js    ← Aggregate stats queries
+│   │   ├── dashboardService.js    ← Aggregate stats queries
+│   │   └── feedbackService.js     ← Insert & get feedbacks via Supabase
 │   ├── router/
 │   │   └── index.js               ← Vue Router config + auth navigation guard (cached profile)
 │   ├── components/
@@ -137,8 +139,9 @@ d:\HopeApp\
 │       ├── MahasiswaDetailView.vue← Detail 1 mahasiswa (data diri + WhatsApp)
 │       ├── UsersView.vue          ← Manajemen pengguna (admin only)
 │       ├── ProfileView.vue        ← Profil user yang sedang login
-│       └── SettingsView.vue       ← Pengaturan akun (email, password, Supabase Auth)
-├── supabase/
+│       ├── SettingsView.vue       ← Pengaturan akun (email, password, Supabase Auth)
+│       ├── FeedbackView.vue       ← Admin/Dosen melihat semua masukan + Analytics
+│       └── PublicFeedbackView.vue ← Portal Publik Standalone untuk mengisi & melihat Masukan
 │   └── schema.sql                 ← Database schema untuk Supabase SQL Editor
 ├── .env.example                   ← Template environment variables
 ├── index.html                     ← Entry HTML (PWA meta tags, viewport lock, theme-color)
@@ -218,6 +221,8 @@ const isMahasiswa = computed(() => profile.value?.roles?.includes('mahasiswa'))
 | Users Management | ✅ | ❌ | ❌ |
 | Profile | ✅ (Edit) | ✅ (Edit) | ✅ (Edit) |
 | Settings | ✅ | ✅ | ✅ |
+| Feedback (Admin) | ✅ | ✅ | ❌ |
+| Public Feedback | ✅ | ✅ | ✅ (No Auth Needed) |
 
 ### 4.5 Registration Toggle
 
@@ -438,6 +443,13 @@ getAdminStats()              → Aggregate: total meetings, students, avg attend
 getMahasiswaStats(studentId) → Aggregate: attendance %, hadir count, missing resumes
 ```
 
+### 6.5 feedbackService.js
+
+```
+submitFeedback(content)      → INSERT INTO feedbacks
+getAllFeedback(page, limit)  → SELECT * FROM feedbacks RANGE(page, limit) ORDER BY created_at
+```
+
 ---
 
 ## 7. Modul & Fitur per View
@@ -545,6 +557,24 @@ getMahasiswaStats(studentId) → Aggregate: attendance %, hadir count, missing r
 - Step indicator dots
 - Info banner keamanan
 - Terhubung ke `supabase.auth.updateUser()`
+
+### 7.14 FeedbackView (`/feedback`)
+
+- **Admin/Dosen Only**
+- Masonry Card layout untuk melihat daftar masukan rahasia dari mahasiswa.
+- Pagination "Load More" bawaan dari service layer.
+- Terdapat tombol copy link (Share2 icon) untuk membagikan tautan form `/masukan` ke grup mahasiswa.
+- Analitik singkat: Total Masukan & Bulan Ini.
+
+### 7.15 PublicFeedbackView (`/masukan`)
+
+- **Public / Tanpa Auth (Standalone Page)**
+- Digunakan mahasiswa untuk mengirim saran anonim atau membaca dinding aspirasi HopeApp.
+- Tidak terikat pada `<AppSidebar>` atau `<AppHeader>` agar berkesan seperti portal landing page independen (bebas distorsi).
+- Google Translate Widget (Native integration) tersemat di pojok navigasi untuk membantu dosen native membaca masukan dalam bahasa Mandarin.
+- Animated gradient banner dan masonry grid layout kaca berlapis (Glassmorphism + sticky footer label).
+- Animasi reaktif, batasan input 500 karakter dengan penghitung otomatis (Tiptap / Textarea).
+- Pagination range limit supabase untuk mencegah overload API.
 
 ---
 
@@ -812,19 +842,12 @@ input, textarea, [contenteditable="true"] {
 
 ---
 
-## 16. Changelog
+## 16. Versioning History (Changelog)
 
-| Versi | Tanggal | Perubahan |
-|-------|---------|----------|
-| 1.0 | 2 April 2026 | Rilis awal: full Supabase migration, multi-role, semua modul CRUD |
-| 1.1 | 2 April 2026 | PWA support, logo Barongsai, favicon, production cleanup |
-| 1.1.1 | 3 April 2026 | Router memory caching, optimistic UI dashboard, native mobile polish, vendor chunk splitting, versi label di login |
-| 1.1.2 | 3 April 2026 | Optimistic UI tanpa loading spinner, dokumentasi core.md diperbarui menyeluruh |
-| 1.1.3 | 3 April 2026 | Fix session stale saat kembali ke app (visibilitychange), versi ditampilkan di Settings |
-| 1.2.0 | 3 April 2026 | Skeleton loading di seluruh halaman (Dashboard, Meetings, Presensi, Mahasiswa). Komponen SkeletonLoader & PageSkeleton reusable |
-| 1.3.0 | 3 April 2026 | Halaman reset password dedicated (/reset-password). Form sandi baru + konfirmasi + toggle visibility + real-time match indicator. Fix feedback message mobile di login page |
+| Versi | Tanggal | Perubahan Utama |
+|---|---|---|
+| 1.5.0 | 3 April 2026 | Modul Feedback (Masukan Mahasiswa) dengan dukungan Shareable View `/masukan`, Pagination Load-More, dan integrasi Google Translate. Desain UI Glassmorphism Premium. |
 | 1.4.0 | 3 April 2026 | Integrasi Cloudflare Turnstile (invisible mode) di login dan reset password dengan server-side verification di Supabase. |
-
----
+| 1.3.0 | 2 April 2026 | Migrasi Frontend-Only ke Full-Stack menggunakan Supabase. Implementasi Auth, RLS Policies, dan penggantian Service Layer Mocks ke API asli. |
 
 *Dokumen ini adalah sumber kebenaran tunggal (single source of truth) untuk memahami sistem HopeApp secara menyeluruh.*

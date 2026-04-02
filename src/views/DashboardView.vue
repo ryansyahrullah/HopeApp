@@ -47,6 +47,11 @@
             <span class="shortcut-label">Pertemuan</span>
           </router-link>
 
+          <router-link to="/feedback" class="shortcut-item">
+            <div class="shortcut-icon" style="background-color: #fce7f3; color: #db2777;"><MessageSquare :size="24" stroke-width="2.5" /></div>
+            <span class="shortcut-label">Masukan</span>
+          </router-link>
+
           <!-- Admin & Dosen -->
           <template v-if="isAdmin || isDosen">
             <router-link to="/mahasiswa" class="shortcut-item">
@@ -324,7 +329,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Plus, CheckCircle, Users, CalendarDays, Sparkles, BookOpen, Trophy, BookX, ClipboardCheck, Rocket, PieChart, UsersRound, GraduationCap } from 'lucide-vue-next'
+import { Plus, CheckCircle, Users, CalendarDays, Sparkles, BookOpen, Trophy, BookX, ClipboardCheck, Rocket, PieChart, UsersRound, GraduationCap, MessageSquare } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { dashboardService } from '@/services/dashboardService'
 import BaseButton from '@/components/common/BaseButton.vue'

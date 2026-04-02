@@ -25,8 +25,8 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 
 const route = useRoute()
 
-// Sembunyikan sidebar dan header jika di halaman login atau register lengkap
-const isAuthRoute = computed(() => route.path === '/login' || route.path === '/complete-profile')
+// Sembunyikan sidebar dan header jika di halaman standalone public/login
+const isAuthRoute = computed(() => ['/login', '/complete-profile', '/reset-password', '/masukan'].includes(route.path))
 
 // FIX: Saat user kembali ke app setelah minimize Chrome / pindah aplikasi,
 // sesi Supabase bisa basi (stale). Kita paksa refresh sesi agar menu tidak membeku.
