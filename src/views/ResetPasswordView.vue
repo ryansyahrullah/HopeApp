@@ -93,6 +93,10 @@
         </template>
 
       </div>
+
+      <!-- Turnstile invisible widget -->
+      <div ref="turnstileContainerRef"></div>
+
     </div>
   </div>
 </template>
@@ -102,8 +106,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { KeyRound, Eye, EyeOff, AlertCircle, CheckCircle, LogIn } from 'lucide-vue-next'
 import { supabase } from '@/lib/supabase'
+import { useTurnstile } from '@/composables/useTurnstile'
 
 const router = useRouter()
+const { turnstileContainerRef, executeTurnstile, resetTurnstile } = useTurnstile()
 
 const newPassword = ref('')
 const confirmPassword = ref('')
@@ -140,6 +146,13 @@ const handleReset = async () => {
 
   isProcessing.value = true
   try {
+    // Verify Turnstile before updating password
+    const token = await executeTurnstile()
+    if (!token) {
+      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
+      return
+    }
+
     const { error } = await supabase.auth.updateUser({
       password: newPassword.value
     })
@@ -150,6 +163,7 @@ const handleReset = async () => {
     await supabase.auth.signOut()
     isSuccess.value = true
   } catch (error) {
+    resetTurnstile()
     if (error.message?.includes('same_password')) {
       errorMessage.value = 'Sandi baru tidak boleh sama dengan sandi lama.'
     } else if (error.message?.includes('weak_password')) {

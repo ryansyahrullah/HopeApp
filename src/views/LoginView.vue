@@ -112,6 +112,9 @@
         </form>
       </div>
 
+      <!-- Turnstile invisible widget -->
+      <div ref="turnstileContainerRef"></div>
+
     </div>
   </div>
 </template>
@@ -121,9 +124,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ChevronLeft, AlertCircle, CheckCircle } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
+import { useTurnstile } from '@/composables/useTurnstile'
 
 const router = useRouter()
 const { signInWithEmail: authSignIn, signInWithGoogle: authGoogleSignIn, resetPassword } = useAuth()
+const { turnstileContainerRef, executeTurnstile, resetTurnstile } = useTurnstile()
 
 const authMode = ref('login') // 'login', 'forgot_email'
 
@@ -149,9 +154,17 @@ const loginWithEmail = async () => {
   clearMessages()
   isProcessing.value = true
   try {
+    // Verify Turnstile before login
+    const token = await executeTurnstile()
+    if (!token) {
+      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
+      return
+    }
+
     await authSignIn(email.value, password.value)
     router.push('/')
   } catch (error) {
+    resetTurnstile()
     if (error.message?.includes('Invalid login')) {
       errorMessage.value = 'Email atau password salah.'
     } else if (error.message?.includes('Email not confirmed')) {
@@ -180,10 +193,17 @@ const sendResetLink = async () => {
   clearMessages()
   isProcessing.value = true
   try {
+    // Verify Turnstile before sending reset link
+    const token = await executeTurnstile()
+    if (!token) {
+      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
+      return
+    }
+
     await resetPassword(resetEmail.value)
     successMessage.value = `Link reset sandi telah dikirim ke ${resetEmail.value}. Cek inbox atau folder spam Anda.`
-    // Stay on this page so user can see the success message
   } catch (error) {
+    resetTurnstile()
     errorMessage.value = error.message || 'Gagal mengirim link reset.'
   } finally {
     isProcessing.value = false
