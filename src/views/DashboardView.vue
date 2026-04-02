@@ -35,16 +35,10 @@
        <div class="mobile-bg-extender"></div>
     </div>
 
-    <!-- State Loading -->
-    <div v-if="isLoading" class="flex-center desktop-only" style="height: 300px">
-      <span class="loader" style="border-top-color: var(--c-primary); width: 40px; height: 40px;"></span>
-    </div>
-
-    <template v-else>
-      <!-- ==============================================
-           APP SHORTCUTS MENU
-           ============================================== -->
-      <div class="app-shortcuts-section animate-fade-in" style="animation-delay: 0.05s">
+    <!-- ==============================================
+         APP SHORTCUTS MENU (Selalu Muncul Instan)
+         ============================================== -->
+    <div class="app-shortcuts-section animate-fade-in" style="animation-delay: 0.05s">
         <h3 class="section-title">Akses Cepat</h3>
         <div class="app-shortcuts">
           <!-- Semua Role -->
@@ -92,10 +86,16 @@
         </div>
       </div>
 
-      <!-- ==============================================
-           BENTO DASHBOARD ADMIN & DOSEN (Desktop)
-           ============================================== -->
-      <div v-if="isAdmin || isDosen" class="bento-grid desktop-only animate-fade-in">
+      <!-- State Loading untuk Data Statistik -->
+      <div v-if="isLoading" class="flex-center" style="height: 150px; width: 100%;">
+        <span class="loader" style="border-top-color: var(--c-primary); width: 40px; height: 40px;"></span>
+      </div>
+
+      <template v-else>
+        <!-- ==============================================
+             BENTO DASHBOARD ADMIN & DOSEN (Desktop)
+             ============================================== -->
+        <div v-if="isAdmin || isDosen" class="bento-grid desktop-only animate-fade-in">
         
         <!-- Tile 1: Status Aplikasi (Wide) -->
         <div class="bento-item bento-wide bento-card-glass">
