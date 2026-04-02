@@ -14,9 +14,22 @@
     <!-- CONTENT -->
     <div class="content-container">
 
-      <div v-if="isLoading" class="loading-state">
-        <Loader2 class="spin-icon text-danger" :size="40" />
-        <p>Menarik data aspirasi publik...</p>
+      <div v-if="isLoading" class="masonry-grid">
+        <div v-for="i in 6" :key="i" class="feedback-card" style="box-shadow: none;">
+          <div class="card-content-wrap" style="margin-top: 1rem;">
+            <SkeletonLoader width="90%" height="1rem" style="margin-bottom: 0.6rem;" />
+            <SkeletonLoader width="100%" height="1rem" style="margin-bottom: 0.6rem;" />
+            <SkeletonLoader width="75%" height="1rem" style="margin-bottom: 1.5rem;" />
+          </div>
+          <div class="card-footer">
+            <div class="author-info" style="width: 100%;">
+              <div style="display: flex; flex-direction: column; gap: 0.4rem; width: 100%;">
+                <SkeletonLoader width="100px" height="0.85rem" />
+                <SkeletonLoader width="60px" height="0.65rem" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div v-else-if="feedbacks.length === 0" class="empty-state">
@@ -63,8 +76,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { MessageSquareDashed, Loader2, User, Quote } from 'lucide-vue-next'
+import { MessageSquareDashed, Loader2, Quote } from 'lucide-vue-next'
 import { feedbackService } from '@/services/feedbackService'
+import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 
 const feedbacks = ref([])
 const isLoading = ref(true)
