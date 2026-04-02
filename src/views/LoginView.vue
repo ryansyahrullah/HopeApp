@@ -11,18 +11,18 @@
 
     <!-- Kolom Kanan: State Area -->
     <div class="login-form-container">
-      
-      <!-- Feedback Messages -->
-      <div v-if="errorMessage" class="feedback-msg error-msg animate-fade-in">
-        <AlertCircle :size="18" /> {{ errorMessage }}
-      </div>
-      <div v-if="successMessage" class="feedback-msg success-msg animate-fade-in">
-        <CheckCircle :size="18" /> {{ successMessage }}
-      </div>
 
       <!-- MODE 0: LOGIN DEFAULT -->
       <div v-if="authMode === 'login'" class="form-wrapper animate-fade-in">
         
+        <!-- Feedback Messages (inside card) -->
+        <div v-if="errorMessage" class="feedback-msg error-msg animate-fade-in">
+          <AlertCircle :size="18" /> {{ errorMessage }}
+        </div>
+        <div v-if="successMessage" class="feedback-msg success-msg animate-fade-in">
+          <CheckCircle :size="18" /> {{ successMessage }}
+        </div>
+
         <div class="brand-header">
           <h1 class="brand-logo">HopeApp 希</h1>
           <p class="brand-subtitle">Bahasa Mandarin POLIBAN</p>
@@ -80,7 +80,7 @@
         </button>
 
         <!-- Versi Aplikasi -->
-        <p class="app-version">Versi 1.2.0</p>
+        <p class="app-version">Versi 1.3.0</p>
       </div>
 
       <!-- MODE 1: LUPA SANDI - INPUT EMAIL -->
@@ -88,6 +88,15 @@
         <button class="back-link" @click="authMode = 'login'; clearMessages()">
            <ChevronLeft :size="18"/> Kembali ke Login
         </button>
+
+        <!-- Feedback Messages (inside card) -->
+        <div v-if="errorMessage" class="feedback-msg error-msg animate-fade-in">
+          <AlertCircle :size="18" /> {{ errorMessage }}
+        </div>
+        <div v-if="successMessage" class="feedback-msg success-msg animate-fade-in">
+          <CheckCircle :size="18" /> {{ successMessage }}
+        </div>
+
         <div class="brand-header" style="text-align: left;">
           <h2 class="auth-heading">Lupa Sandi?</h2>
           <p class="auth-desc">Masukkan alamat email terdaftar Anda. Kami akan mengirimkan link reset sandi ke email tersebut.</p>
@@ -538,9 +547,7 @@ const sendResetLink = async () => {
 
   .feedback-msg {
     max-width: 100%;
-    margin: 0 1.25rem 0;
-    position: relative;
-    z-index: 11;
+    margin: 0;
   }
 
   .brand-header {

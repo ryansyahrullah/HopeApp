@@ -73,6 +73,12 @@ const routes = [
     path: '/complete-profile',
     name: 'CompleteProfile',
     component: () => import('../views/CompleteProfileView.vue')
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('../views/ResetPasswordView.vue'),
+    meta: { requiresAuth: false }
   }
 ]
 
@@ -84,11 +90,13 @@ const router = createRouter({
 // Navigation guard: redirect to /login if not authenticated
 router.beforeEach(async (to, from, next) => {
   try {
-    // Allow login page without auth
+    // Allow login page without auth (redirect to home if already logged in)
     if (to.meta.requiresAuth === false) {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        return next('/')
+      // Only redirect away from login page if session exists
+      // /reset-password must stay accessible even with recovery session
+      if (to.path === '/login') {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) return next('/')
       }
       return next()
     }
