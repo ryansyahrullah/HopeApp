@@ -257,6 +257,7 @@ const loadMeetings = async () => {
     }
   } catch (error) {
     console.error(error)
+    alert('Gagal memuat daftar pertemuan: ' + error.message)
   } finally {
     isLoading.value = false
   }
@@ -333,8 +334,10 @@ const confirmDelete = async () => {
      await meetingService.deleteMeeting(meetingToDelete.value.id)
      isDeleteDialogOpen.value = false
      await loadMeetings()
-  } catch(e) { console.error(e) }
-  finally { isDeleting.value = false }
+  } catch(e) {
+     console.error(e)
+     alert('Gagal menghapus pertemuan: ' + e.message)
+  } finally { isDeleting.value = false }
 }
 
 onMounted(() => {

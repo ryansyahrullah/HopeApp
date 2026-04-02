@@ -126,6 +126,7 @@ const loadData = async () => {
     students.value = await profileService.getAllStudents()
   } catch(e) {
     console.error(e)
+    alert('Gagal memuat ringkasan eksekutif: ' + e.message)
   } finally {
     isLoading.value = false
   }

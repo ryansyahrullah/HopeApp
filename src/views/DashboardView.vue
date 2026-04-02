@@ -87,6 +87,11 @@
               <div class="shortcut-icon bg-blue-soft"><BookOpen :size="24" stroke-width="2.5" /></div>
               <span class="shortcut-label">Resume</span>
             </router-link>
+
+            <router-link to="/chat" class="shortcut-item">
+              <div class="shortcut-icon" style="background-color: #ecfdf5; color: #10b981;"><MessageCircle :size="24" stroke-width="2.5" /></div>
+              <span class="shortcut-label">Obrolan</span>
+            </router-link>
           </template>
         </div>
       </div>
@@ -329,7 +334,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Plus, CheckCircle, Users, CalendarDays, Sparkles, BookOpen, Trophy, BookX, ClipboardCheck, Rocket, PieChart, UsersRound, GraduationCap, MessageSquare } from 'lucide-vue-next'
+import { Plus, CheckCircle, Users, CalendarDays, Sparkles, BookOpen, Trophy, BookX, ClipboardCheck, Rocket, PieChart, UsersRound, GraduationCap, MessageSquare, MessageCircle } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { dashboardService } from '@/services/dashboardService'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -361,6 +366,7 @@ const fetchDashboardData = async () => {
     }
   } catch (error) {
     console.error("Gagal memuat dashboard", error)
+    alert('Gagal memuat ringkasan dashboard: ' + error.message)
   } finally {
     isLoading.value = false
   }

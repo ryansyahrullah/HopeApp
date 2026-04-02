@@ -112,6 +112,7 @@ const loadFeedbacks = async (isLoadMore = false) => {
     }
   } catch (err) {
     console.error('Failed to load public feedbacks:', err)
+    alert('Gagal memuat masukan publik: ' + err.message)
   } finally {
     isLoading.value = false
     isLoadingMore.value = false
@@ -158,6 +159,7 @@ const formatShortDate = (isoString) => {
 <style scoped>
 .public-feedback-page {
   min-height: 100vh;
+  width: 100%;
   background-color: var(--c-bg);
 }
 
@@ -262,10 +264,15 @@ const formatShortDate = (isoString) => {
    MASONRY/GRID STYLE
    ======================================= */
 .masonry-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
+  column-count: 3;
+  column-gap: 2rem;
   margin-bottom: 3rem;
+}
+
+@media (max-width: 1024px) {
+  .masonry-grid {
+    column-count: 2;
+  }
 }
 
 .feedback-card {
@@ -280,6 +287,8 @@ const formatShortDate = (isoString) => {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
   border-top: 4px solid var(--c-primary);
+  break-inside: avoid;
+  margin-bottom: 2rem;
 }
 
 .feedback-card:hover {
@@ -311,6 +320,7 @@ const formatShortDate = (isoString) => {
   font-weight: 500;
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .card-footer {
@@ -476,8 +486,11 @@ const formatShortDate = (isoString) => {
   }
   
   .masonry-grid {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
+    column-count: 1;
+    column-gap: 1.25rem;
+  }
+  .feedback-card {
+    margin-bottom: 1.25rem;
   }
 }
 

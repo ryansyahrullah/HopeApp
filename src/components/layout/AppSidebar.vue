@@ -58,6 +58,11 @@
           <span class="icon"><FileText :size="20" /></span>
           <span class="nav-label">Resume</span>
         </router-link>
+
+        <router-link to="/chat" class="nav-item">
+          <span class="icon"><MessageCircle :size="20" /></span>
+          <span class="nav-label">Obrolan</span>
+        </router-link>
       </template>
 
       <!-- Bottom Menu -->
@@ -73,7 +78,7 @@
 </template>
 
 <script setup>
-import { LayoutDashboard, CalendarDays, ClipboardCheck, FileText, User, UsersRound, GraduationCap, PieChart, Settings, MessageSquare } from 'lucide-vue-next'
+import { LayoutDashboard, CalendarDays, ClipboardCheck, FileText, User, UsersRound, GraduationCap, PieChart, Settings, MessageSquare, MessageCircle } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 
 const { isAdmin, isDosen, isMahasiswa } = useAuth()

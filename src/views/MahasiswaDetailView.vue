@@ -147,6 +147,18 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Confirm Delete Dialog -->
+    <ConfirmDialog
+      :visible="showDeleteDialog"
+      title="Hapus Mahasiswa?"
+      :message="`Apakah Anda yakin ingin menghapus mahasiswa '${mahasiswa?.full_name}'? Tindakan ini tidak dapat dibatalkan.`"
+      confirmText="Ya, Hapus"
+      variant="danger"
+      :loading="isDeleting"
+      @confirm="executeDeleteMahasiswa"
+      @cancel="showDeleteDialog = false"
+    />
   </div>
 </template>
 
@@ -154,6 +166,7 @@
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, BookOpen, Edit2, Trash2 } from 'lucide-vue-next'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { profileService } from '@/services/profileService'
 import { useAuth } from '@/composables/useAuth'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -224,24 +237,31 @@ const saveEditMahasiswa = async () => {
     showEditModal.value = false
   } catch (error) {
     console.error('Failed to update student', error)
+    alert('Gagal memperbarui data mahasiswa: ' + error.message)
   } finally {
     isSaving.value = false
   }
 }
 
 const isDeleting = ref(false)
-const deleteMahasiswa = async () => {
-  const confirmDelete = confirm(`Apakah Anda yakin ingin menghapus mahasiswa '${mahasiswa.value.full_name}'?`)
-  if (confirmDelete) {
-    isDeleting.value = true
-    try {
-        await profileService.deleteProfile(mahasiswa.value.id)
-        router.push('/mahasiswa')
-    } catch (e) {
-        console.error('Failed to delete student', e)
-    } finally {
-        isDeleting.value = false
-    }
+const showDeleteDialog = ref(false)
+
+const deleteMahasiswa = () => {
+  showDeleteDialog.value = true
+}
+
+const executeDeleteMahasiswa = async () => {
+  if (!mahasiswa.value) return
+  isDeleting.value = true
+  try {
+    await profileService.deleteProfile(mahasiswa.value.id)
+    showDeleteDialog.value = false
+    router.push('/mahasiswa')
+  } catch (e) {
+    console.error('Failed to delete student', e)
+    alert('Gagal menghapus mahasiswa: ' + e.message)
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -252,6 +272,7 @@ onMounted(async () => {
       mahasiswa.value = await profileService.getProfileById(mhsId)
   } catch (e) {
       console.error(e)
+      alert('Gagal memuat detail mahasiswa: ' + e.message)
   } finally {
       isLoading.value = false
   }

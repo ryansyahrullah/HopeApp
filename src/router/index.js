@@ -35,6 +35,12 @@ const routes = [
     component: () => import('../views/MyResumesView.vue')
   },
   {
+    path: '/chat',
+    name: 'Chat',
+    component: () => import('../views/ChatView.vue'),
+    meta: { roles: ['mahasiswa'] }
+  },
+  {
     path: '/resumes',
     name: 'Resumes',
     component: () => import('../views/ResumesView.vue')
@@ -42,7 +48,8 @@ const routes = [
   {
     path: '/summary',
     name: 'Summary',
-    component: () => import('../views/SummaryView.vue')
+    component: () => import('../views/SummaryView.vue'),
+    meta: { roles: ['admin', 'dosen'] }
   },
   {
     path: '/profile',
@@ -52,12 +59,14 @@ const routes = [
   {
     path: '/users',
     name: 'Users',
-    component: () => import('../views/UsersView.vue')
+    component: () => import('../views/UsersView.vue'),
+    meta: { roles: ['admin'] }
   },
   {
     path: '/mahasiswa',
     name: 'Mahasiswa',
-    component: () => import('../views/MahasiswaView.vue')
+    component: () => import('../views/MahasiswaView.vue'),
+    meta: { roles: ['admin', 'dosen'] }
   },
   {
     path: '/feedback',
@@ -73,7 +82,8 @@ const routes = [
   {
     path: '/mahasiswa/:id',
     name: 'MahasiswaDetail',
-    component: () => import('../views/MahasiswaDetailView.vue')
+    component: () => import('../views/MahasiswaDetailView.vue'),
+    meta: { roles: ['admin', 'dosen'] }
   },
   {
     path: '/settings',
@@ -152,6 +162,27 @@ router.beforeEach(async (to, from, next) => {
         // Jika sudah terdaftar (atau admin) dan malah membuka /complete-profile
         if (to.path === '/complete-profile') {
           return next('/')
+        }
+      }
+
+      // === Authorization: Pengecekan Akses Role ===
+      if (to.meta.roles && to.meta.roles.length > 0) {
+        // Cek active role dari localStorage atau gunakan the first matched role
+        const activeRole = localStorage.getItem('activeRole')
+        const userRoles = currentProfile.roles || []
+        
+        let hasAccess = false;
+        
+        // Cek jika activeRole diperbolehkan, ATAU salah satu roles yang dimiliki diperbolehkan
+        if (activeRole && to.meta.roles.includes(activeRole)) {
+          hasAccess = true;
+        } else if (userRoles.some(r => to.meta.roles.includes(r))) {
+          hasAccess = true;
+        }
+
+        if (!hasAccess) {
+           console.warn(`Akses Ditolak: Butuh salah satu role ${to.meta.roles.join(', ')}`)
+           return next('/')
         }
       }
     }

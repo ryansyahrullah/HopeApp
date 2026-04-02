@@ -157,6 +157,7 @@ const loadData = async () => {
     localRecords.value = JSON.parse(JSON.stringify(data))
   } catch (err) {
     console.error(err)
+    alert('Gagal memuat data presensi: ' + err.message)
   } finally {
     isLoading.value = false
   }
@@ -174,6 +175,7 @@ const simpanPresensi = async () => {
     setTimeout(() => { saveSuccess.value = false }, 3000)
   } catch (err) {
     console.error(err)
+    alert('Gagal menyimpan presensi: ' + err.message)
   } finally {
     isSaving.value = false
   }

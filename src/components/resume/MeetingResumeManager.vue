@@ -206,6 +206,7 @@ const simpanResume = async () => {
     }
   } catch (error) {
      console.error(error)
+     alert('Gagal menyimpan resume: ' + error.message)
   } finally {
      isSaving.value = false
   }

@@ -218,6 +218,7 @@ const saveEditProfile = async () => {
     showEditModal.value = false
   } catch (error) {
     console.error('Failed to update profile:', error)
+    alert('Gagal memperbarui profil: ' + error.message)
   } finally {
     isSaving.value = false
   }
@@ -254,6 +255,7 @@ const loadStats = async () => {
     }
   } catch (e) {
     console.error(e)
+    alert('Gagal memuat statistik profil: ' + e.message)
   }
 }
 

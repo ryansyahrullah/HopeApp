@@ -163,6 +163,7 @@ const loadData = async () => {
     }
   } catch (e) {
     console.error(e)
+    alert('Gagal memuat data resume: ' + e.message)
   } finally {
     isLoading.value = false
   }

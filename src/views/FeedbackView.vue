@@ -113,7 +113,7 @@
             </div>
             
             <div class="card-actions" v-if="isAdmin">
-              <button @click="confirmDelete(item.id)" class="delete-btn" title="Hapus Permanen">
+              <button @click="promptDeleteFeedback(item.id)" class="delete-btn" title="Hapus Permanen">
                 <Trash2 :size="18" />
               </button>
             </div>
@@ -131,6 +131,17 @@
 
     </div>
 
+    <!-- Confirm Delete Dialog -->
+    <ConfirmDialog
+      :visible="showDeleteDialog"
+      title="Hapus Masukan?"
+      message="Apakah Anda yakin ingin menghapus masukan publik ini secara permanen?"
+      confirmText="Ya, Hapus"
+      variant="danger"
+      :loading="isDeletingFeedback"
+      @confirm="executeDeleteFeedback"
+      @cancel="showDeleteDialog = false"
+    />
   </div>
 </template>
 
@@ -138,6 +149,7 @@
 import { ref, onMounted } from 'vue'
 import { Share2, Send, CheckCircle, AlertCircle, Trash2, Calendar, MessageSquareDashed, Loader2, Sparkles, Quote } from 'lucide-vue-next'
 import BaseButton from '@/components/common/BaseButton.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 import { useAuth } from '@/composables/useAuth'
 import { feedbackService } from '@/services/feedbackService'
@@ -185,6 +197,7 @@ const loadFeedbacks = async (isLoadMore = false) => {
     }
   } catch (err) {
     console.error('Failed to load feedbacks:', err)
+    alert('Gagal memuat daftar masukan: ' + err.message)
   } finally {
     isLoading.value = false
     isLoadingMore.value = false
@@ -226,15 +239,29 @@ const submitFeedback = async () => {
   }
 }
 
-const confirmDelete = async (id) => {
-  if (!confirm('Yakin ingin menghapus masukan ini secara permanen?')) return
+const showDeleteDialog = ref(false)
+const deleteTargetId = ref(null)
+const isDeletingFeedback = ref(false)
+
+const promptDeleteFeedback = (id) => {
+  deleteTargetId.value = id
+  showDeleteDialog.value = true
+}
+
+const executeDeleteFeedback = async () => {
+  if (!deleteTargetId.value) return
+  isDeletingFeedback.value = true
   
   try {
-    await feedbackService.deleteFeedback(id)
-    feedbacks.value = feedbacks.value.filter(f => f.id !== id)
+    await feedbackService.deleteFeedback(deleteTargetId.value)
+    feedbacks.value = feedbacks.value.filter(f => f.id !== deleteTargetId.value)
+    showDeleteDialog.value = false
   } catch (err) {
     console.error('Failed to delete feedback:', err)
     alert('Gagal menghapus masukan.')
+  } finally {
+    isDeletingFeedback.value = false
+    deleteTargetId.value = null
   }
 }
 
@@ -501,9 +528,8 @@ const formatDateTime = (isoString) => {
    ADMIN/DOSEN LIST: MASONRY/GRID STYLE
    ======================================= */
 .masonry-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  column-width: 350px;
+  column-gap: 1.5rem;
 }
 
 .feedback-card {
@@ -517,6 +543,8 @@ const formatDateTime = (isoString) => {
   box-shadow: 0 4px 12px -5px rgba(0, 0, 0, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
 }
 
 .feedback-card:hover {
@@ -549,6 +577,7 @@ const formatDateTime = (isoString) => {
   font-weight: 500;
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .card-footer {
@@ -687,7 +716,7 @@ const formatDateTime = (isoString) => {
   }
   
   .masonry-grid {
-    grid-template-columns: 1fr;
+    column-count: 1;
   }
 }
 </style>

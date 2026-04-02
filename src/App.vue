@@ -1,13 +1,13 @@
 <template>
   <div class="app-layout">
     <!-- Sidebar Kiri -->
-    <AppSidebar v-if="!isAuthRoute" />
+    <AppSidebar v-if="!isAuthRoute && !isFullscreenRoute" />
     
     <!-- Konten Kanan -->
     <div class="main-wrapper">
-      <AppHeader v-if="!isAuthRoute" />
+      <AppHeader v-if="!isAuthRoute && !isFullscreenRoute" />
       
-      <main class="main-content" :class="{ 'auth-content': isAuthRoute }">
+      <main class="main-content" :class="{ 'auth-content': isAuthRoute, 'fullscreen-content': isFullscreenRoute }">
         <router-view v-slot="{ Component }">
           <component :is="Component" />
         </router-view>
@@ -27,6 +27,9 @@ const route = useRoute()
 
 // Sembunyikan sidebar dan header jika di halaman standalone public/login
 const isAuthRoute = computed(() => ['/login', '/complete-profile', '/reset-password', '/masukan'].includes(route.path))
+
+// Halaman fullscreen (tanpa sidebar/header, tapi bukan auth)
+const isFullscreenRoute = computed(() => ['/chat'].includes(route.path))
 
 // FIX: Saat user kembali ke app setelah minimize Chrome / pindah aplikasi,
 // sesi Supabase bisa basi (stale). Kita paksa refresh sesi agar menu tidak membeku.
@@ -84,6 +87,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.fullscreen-content {
+  padding: 0 !important;
 }
 
 @media (max-width: 768px) {

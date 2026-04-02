@@ -67,6 +67,7 @@ const loadMahasiswa = async () => {
     mahasiswaList.value = await profileService.getAllStudents()
   } catch (error) {
     console.error('Error loading mahasiswa:', error)
+    alert('Gagal memuat daftar mahasiswa: ' + error.message)
   } finally {
     isLoading.value = false
   }

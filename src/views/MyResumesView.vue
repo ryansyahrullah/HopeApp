@@ -74,6 +74,7 @@ const loadData = async () => {
       }
    } catch (e) {
       console.error(e)
+      alert('Gagal memuat sesi pertemuan: ' + e.message)
    } finally {
       isLoading.value = false
    }

@@ -165,6 +165,18 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Confirm Delete Dialog -->
+    <ConfirmDialog
+      :visible="showDeleteDialog"
+      title="Hapus Pengguna?"
+      :message="`Apakah Anda yakin ingin menghapus pengguna '${deleteTarget?.full_name}'? Semua data terkait akan dihapus permanen.`"
+      confirmText="Ya, Hapus"
+      variant="danger"
+      :loading="isDeleteLoading"
+      @confirm="executeDeleteUser"
+      @cancel="showDeleteDialog = false"
+    />
   </div>
 </template>
 
@@ -172,6 +184,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { UserPlus, Search, Edit2, Trash2 } from 'lucide-vue-next'
 import BaseCard from '@/components/common/BaseCard.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { profileService } from '@/services/profileService'
 import { useAuth } from '@/composables/useAuth'
 
@@ -187,6 +200,7 @@ const loadData = async () => {
     isRegistrationOpen.value = await profileService.getRegistrationSetting()
   } catch (error) {
     console.error('Failed to load users data', error)
+    alert('Gagal memuat pengguna: ' + error.message)
   }
 }
 
@@ -199,6 +213,7 @@ watch(isRegistrationOpen, async (newVal) => {
     await profileService.setRegistrationSetting(newVal)
   } catch (error) {
     console.error('Failed to update registration setting', error)
+    alert('Gagal mengubah status pendaftaran: ' + error.message)
   }
 })
 
@@ -277,6 +292,7 @@ const toggleRole = async (user, roleName) => {
     console.error('Failed to update role', e)
     // Revert if failed
     loadData()
+    alert('Gagal mengubah role pengguna: ' + e.message)
   }
 }
 
@@ -325,21 +341,35 @@ const saveEditUser = async () => {
       showEditModal.value = false
     } catch (e) {
        console.error('Failed to update user', e)
+       alert('Gagal menyimpan pengguna: ' + e.message)
     } finally {
        isSaving.value = false
     }
   }
 }
 
-const deleteUser = async (user) => {
-  const confirmDelete = confirm(`Apakah Anda yakin ingin menghapus pengguna '${user.full_name}'? Tindakan ini akan menghapus semua data terkait.`)
-  if (confirmDelete) {
-    try {
-      await profileService.deleteProfile(user.id)
-      await loadData()
-    } catch (e) {
-      console.error('Failed to delete user', e)
-    }
+const showDeleteDialog = ref(false)
+const deleteTarget = ref(null)
+const isDeleteLoading = ref(false)
+
+const deleteUser = (user) => {
+  deleteTarget.value = user
+  showDeleteDialog.value = true
+}
+
+const executeDeleteUser = async () => {
+  if (!deleteTarget.value) return
+  isDeleteLoading.value = true
+  try {
+    await profileService.deleteProfile(deleteTarget.value.id)
+    showDeleteDialog.value = false
+    deleteTarget.value = null
+    await loadData()
+  } catch (e) {
+    console.error('Failed to delete user', e)
+    alert('Gagal menghapus pengguna: ' + e.message)
+  } finally {
+    isDeleteLoading.value = false
   }
 }
 </script>

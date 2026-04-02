@@ -105,8 +105,11 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ---- PROFILES ----
-CREATE POLICY "profiles_select_authenticated"
-  ON profiles FOR SELECT TO authenticated USING (true);
+CREATE POLICY "profiles_select_own"
+  ON profiles FOR SELECT TO authenticated USING (id = auth.uid());
+
+CREATE POLICY "profiles_select_admin_dosen"
+  ON profiles FOR SELECT TO authenticated USING (public.has_role('admin') OR public.has_role('dosen'));
 
 CREATE POLICY "profiles_update_own"
   ON profiles FOR UPDATE TO authenticated USING (id = auth.uid());
@@ -203,3 +206,36 @@ CREATE POLICY "feedbacks_insert_mahasiswa"
 -- Delete: Hanya bisa dihapus oleh admin
 CREATE POLICY "feedbacks_delete_admin"
   ON feedbacks FOR DELETE TO authenticated USING (public.has_role('admin'));
+
+-- ==============================================
+-- 7. Messages (Obrolan Grup Mahasiswa)
+-- ==============================================
+CREATE TABLE IF NOT EXISTS messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- Select: Semua user login bisa baca (perlu untuk realtime)
+CREATE POLICY "messages_select_authenticated"
+  ON messages FOR SELECT TO authenticated USING (true);
+
+-- Insert: Hanya mahasiswa yang bisa kirim pesan
+CREATE POLICY "messages_insert_mahasiswa"
+  ON messages FOR INSERT TO authenticated WITH CHECK (
+    user_id = auth.uid() AND public.has_role('mahasiswa')
+  );
+
+-- Delete: User bisa hapus pesannya sendiri
+CREATE POLICY "messages_delete_own"
+  ON messages FOR DELETE TO authenticated USING (user_id = auth.uid());
+
+-- Delete: Admin bisa hapus semua pesan
+CREATE POLICY "messages_delete_admin"
+  ON messages FOR DELETE TO authenticated USING (public.has_role('admin'));
+
+-- Aktifkan Supabase Realtime untuk tabel messages
+ALTER PUBLICATION supabase_realtime ADD TABLE messages;

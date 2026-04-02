@@ -94,6 +94,7 @@ const loadMatrix = async () => {
     
   } catch (e) {
     console.error(e)
+    alert('Gagal memuat rekap presensi: ' + e.message)
   } finally {
     isLoading.value = false
   }

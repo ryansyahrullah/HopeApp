@@ -93,6 +93,7 @@ const handleLogout = async () => {
     router.push('/login')
   } catch (e) {
     console.error('Logout error:', e)
+    alert('Gagal logout: ' + e.message)
   }
 }
 </script>

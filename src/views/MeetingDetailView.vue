@@ -200,6 +200,7 @@ const loadDetail = async () => {
     meeting.value = data
   } catch (err) {
     console.error(err)
+    alert('Gagal memuat detail pertemuan: ' + err.message)
   } finally {
     isLoading.value = false
   }
@@ -219,8 +220,10 @@ const confirmDelete = async () => {
      await meetingService.deleteMeeting(route.params.id)
      isDeleteDialogOpen.value = false
      router.push('/meetings') // Redirect ke daftar
-  } catch(e) { console.error(e) }
-  finally { isDeleting.value = false }
+  } catch(e) {
+     console.error(e)
+     alert('Gagal menghapus pertemuan: ' + e.message)
+  } finally { isDeleting.value = false }
 }
 
 // Logic Edit
