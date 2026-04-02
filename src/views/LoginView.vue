@@ -112,10 +112,10 @@
         </form>
       </div>
 
-      <!-- Turnstile invisible widget -->
-      <div ref="turnstileContainerRef"></div>
-
     </div>
+
+    <!-- Turnstile invisible widget (Moved outside dynamic container to prevent VDOM wipe) -->
+    <div ref="turnstileContainerRef" key="turnstile-app-widget" style="display:none;"></div>
   </div>
 </template>
 

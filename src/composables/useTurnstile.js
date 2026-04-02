@@ -50,7 +50,7 @@ export function useTurnstile() {
           turnstileToken.value = token
         },
         'error-callback': () => {
-          turnstileToken.value = ''
+          turnstileToken.value = 'ERROR'
         },
         'expired-callback': () => {
           turnstileToken.value = ''
@@ -82,28 +82,36 @@ export function useTurnstile() {
       return ''
     }
 
-    // Reset before executing
-    turnstileToken.value = ''
-    window.turnstile.reset(widgetId)
+    // Reset before executing only if it already has a token
+    if (turnstileToken.value) {
+      window.turnstile.reset(widgetId)
+      turnstileToken.value = ''
+    }
+
+    try {
+      window.turnstile.execute(widgetId)
+    } catch(e) {
+      console.warn("Turnstile execute error:", e)
+      return ''
+    }
 
     return new Promise((resolve) => {
-      // Override callback to resolve the promise
-      window.turnstile.execute(widgetId, {
-        callback: (token) => {
-          turnstileToken.value = token
-          resolve(token)
-        },
-        'error-callback': () => {
-          turnstileToken.value = ''
-          resolve('')
+      const checkInterval = setInterval(() => {
+        if (turnstileToken.value) {
+          clearInterval(checkInterval)
+          clearTimeout(timeout)
+          if (turnstileToken.value === 'ERROR') {
+            resolve('')
+          } else {
+            resolve(turnstileToken.value)
+          }
         }
-      })
+      }, 100)
 
       // Timeout fallback (8 seconds)
-      setTimeout(() => {
-        if (!turnstileToken.value) {
-          resolve('')
-        }
+      const timeout = setTimeout(() => {
+        clearInterval(checkInterval)
+        resolve('')
       }, 8000)
     })
   }
