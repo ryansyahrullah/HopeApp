@@ -2,6 +2,9 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 const SITE_KEY = '0x4AAAAAAACznIAR1LQgLgMND'
 
+// ⚠️ SET KE false UNTUK MENGAKTIFKAN KEMBALI TURNSTILE
+const BYPASS_TURNSTILE = true
+
 /**
  * Composable for Cloudflare Turnstile (invisible mode)
  * Usage:
@@ -13,8 +16,19 @@ const SITE_KEY = '0x4AAAAAAACznIAR1LQgLgMND'
 export function useTurnstile() {
   const turnstileToken = ref('')
   const turnstileContainerRef = ref(null)
-  const isReady = ref(false)
+  const isReady = ref(BYPASS_TURNSTILE)
   let widgetId = null
+
+  // Jika bypass aktif, return dummy functions
+  if (BYPASS_TURNSTILE) {
+    return {
+      turnstileToken,
+      turnstileContainerRef,
+      executeTurnstile: async () => null,
+      resetTurnstile: () => {},
+      isReady
+    }
+  }
 
   // Wait for Turnstile script to load
   function waitForTurnstile() {
