@@ -16,7 +16,7 @@
       </div>
       
       <div class="chat-header-actions">
-        <button class="action-btn" @click="loadMessages" :disabled="isLoading" title="Refresh">
+        <button class="action-btn" @click="hardRefresh" :disabled="isLoading" title="Refresh">
           <Loader2 v-if="isLoading" class="spin-icon" :size="20" />
           <RefreshCcw v-else :size="20" />
         </button>
@@ -238,6 +238,10 @@ onUnmounted(() => {
 })
 
 // ============ DATA LOADING ============
+
+const hardRefresh = () => {
+  window.location.reload()
+}
 
 const loadMessages = async () => {
   isLoading.value = true

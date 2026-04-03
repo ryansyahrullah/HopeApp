@@ -59,8 +59,6 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'AI belum dikonfigurasi. Hubungi admin.' })
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`
-
     // Parse history for Gemini context
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedContents = history.map((msg: any) => ({
@@ -71,40 +69,66 @@ Deno.serve(async (req: Request) => {
     // Append current formatted question
     formattedContents.push({ role: 'user', parts: [{ text: cleanQuestion }] })
 
-    const geminiRes = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const FALLBACK_MODELS = [
+      'gemini-2.0-flash-lite',
+      'gemini-3.1-flash-lite',
+      'gemini-2.5-flash',
+      'gemma-3-27b-it',
+      'gemma-3-27b',
+      'gemma-4-26b-it',
+      'gemma-4-31b-it',
+      'gemma-3-12b-it',
+      'gemma-3-4b-it',
+      'gemini-3-flash',
+      'gemini-1.5-flash'
+    ]
+
+    let answer = null
+    let fallbackTriggered = false
+    let apiErrorMsg = null
+
+    for (const modelName of FALLBACK_MODELS) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`
+      
+      const payload = JSON.stringify({
         contents: formattedContents,
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
         generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
-      }),
-    })
+      })
 
-    // Quota habis → pesan manusiawi
-    if (geminiRes.status === 429) {
-      const friendlyMsg = 'Maaf ya, Cici lagi istirahat sebentar karena sudah banyak yang bertanya hari ini 😊 Coba lagi dalam beberapa menit ya!'
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+      })
 
-      // Kalau di grup chat, kirim pesan ini sebagai Cici
-      if (!isPrivate) {
-        await insertCiciMessage(friendlyMsg)
+      if (res.ok) {
+        const data = await res.json()
+        answer = data?.candidates?.[0]?.content?.parts?.[0]?.text
+        if (answer) {
+          console.log(`[ask-cici] Success with model: ${modelName}`)
+          break // Berhasil, keluar dari loop
+        }
+      } else if (res.status === 429) {
+        console.warn(`[ask-cici] Model ${modelName} hit quota limit 429. Trying fallback...`)
+        fallbackTriggered = true
+        continue
+      } else {
+        const errText = await res.text()
+        console.error(`[ask-cici] Model ${modelName} error ${res.status}:`, errText)
+        apiErrorMsg = 'Cici sedang tidak bisa merespons saat ini. Coba lagi nanti ya.'
+        // Coba model fallback lain jika error 503 / 500
+        continue
       }
-
-      return json({ answer: friendlyMsg })
     }
-
-    // Error lain dari Gemini
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text()
-      console.error(`[ask-cici] Gemini ${geminiRes.status}:`, errText)
-      return json({ error: 'Cici sedang tidak bisa merespons saat ini. Coba lagi nanti ya.' })
-    }
-
-    const data = await geminiRes.json()
-    const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text
 
     if (!answer) {
-      return json({ error: 'Hmm, Cici bingung mau jawab apa. Coba tanya dengan cara lain ya!' })
+      if (fallbackTriggered) {
+        const friendlyMsg = 'Maaf ya, Cici lagi istirahat sebentar karena sudah banyak yang bertanya hari ini 😊 Coba lagi dalam beberapa menit ya!'
+        if (!isPrivate) await insertCiciMessage(friendlyMsg)
+        return json({ answer: friendlyMsg })
+      }
+      return json({ error: apiErrorMsg || 'Hmm, Cici bingung mau jawab apa. Coba tanya dengan cara lain ya!' })
     }
 
     // Simpan ke grup chat jika bukan private
