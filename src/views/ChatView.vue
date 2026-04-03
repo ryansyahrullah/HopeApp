@@ -631,18 +631,10 @@ const getSenderColor = (roles) => {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100vh;
-  max-height: 100dvh;
+  height: 100%;
   background-color: var(--c-bg);
   overflow: hidden;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 100;
+  position: relative;
 }
 
 /* ========== HEADER ========== */
@@ -743,6 +735,7 @@ const getSenderColor = (roles) => {
   flex-direction: column;
   gap: 0.35rem;
   background-color: #f0ece6;
+  min-height: 0; /* Crucial for inner scroll in flex container */
   
   /* Subtle warm pattern */
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");

@@ -82,9 +82,10 @@ const isFullscreenRoute = computed(() => ['/chat', '/cici-chat'].includes(route.
   padding: 0 !important;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden !important;
   flex: 1;
   height: 100%;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
@@ -94,8 +95,9 @@ const isFullscreenRoute = computed(() => ['/chat', '/cici-chat'].includes(route.
   }
 
   .fullscreen-content {
-    padding-bottom: 0 !important; /* Chat tidak butuh padding extra karena bottom nav ada di bawahnya */
+    padding-bottom: 0 !important;
     flex: 1;
+    min-height: 0;
   }
 }
 </style>

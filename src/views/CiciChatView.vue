@@ -284,6 +284,7 @@ const sendMessage = async () => {
   height: 100%;
   background: var(--c-surface);
   position: relative;
+  overflow: hidden;
 }
 
 /* ========== HEADER ========== */
@@ -463,6 +464,7 @@ const sendMessage = async () => {
   background-color: #fdf2f8; /* Soft pink background */
   background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
   background-size: 24px 24px;
+  min-height: 0; /* Crucial for inner scroll in flex container */
 }
 
 .chat-messages::-webkit-scrollbar {
