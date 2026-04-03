@@ -41,6 +41,11 @@ const routes = [
     meta: { roles: ['mahasiswa'] }
   },
   {
+    path: '/cici-chat',
+    name: 'CiciChat',
+    component: () => import('../views/CiciChatView.vue')
+  },
+  {
     path: '/resumes',
     name: 'Resumes',
     component: () => import('../views/ResumesView.vue')

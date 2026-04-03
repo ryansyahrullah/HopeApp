@@ -48,17 +48,18 @@
 
           <div 
             class="message-row" 
-            :class="{ 'own': isOwnMessage(msg) }"
+            :class="{ 'own': isOwnMessage(msg), 'ai-row': isAiMessage(msg) }"
             @contextmenu.prevent="isOwnMessage(msg) ? showContextMenu($event, msg) : null"
             @touchstart="isOwnMessage(msg) ? onTouchStart($event, msg) : null"
             @touchend="onTouchEnd"
             @touchmove="onTouchEnd"
           >
-            <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg), 'editing-bubble': editingMessageId === msg.id }">
+            <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg), 'ai-bubble': isAiMessage(msg), 'editing-bubble': editingMessageId === msg.id }">
               <!-- Sender name (hanya untuk pesan orang lain) -->
-              <span v-if="!isOwnMessage(msg)" class="sender-name" :style="{ color: getSenderColor(msg.author_roles) }">
+              <span v-if="!isOwnMessage(msg)" class="sender-name" :style="{ color: isAiMessage(msg) ? '#db2777' : getSenderColor(msg.author_roles), display: isAiMessage(msg) ? 'flex' : 'block', alignItems: 'center', gap: '4px' }">
+                <img v-if="isAiMessage(msg)" src="/cici_avatar.png" alt="Cici" class="cici-avatar-small" />
                 {{ msg.author_name || 'Unknown' }}
-                <span v-if="msg.author_number" class="sender-badge">{{ msg.author_number }}</span>
+                <span v-if="msg.author_number && !isAiMessage(msg)" class="sender-badge">{{ msg.author_number }}</span>
               </span>
               
               <!-- Edit Mode -->
@@ -92,12 +93,38 @@
         </template>
       </template>
 
+      <!-- Typing Indicator for Cici -->
+      <div v-if="isCiciTyping" class="message-row ai-row">
+        <div class="message-bubble ai-bubble typing-bubble">
+          <span class="sender-name" style="color: #db2777; display: flex; align-items: center; gap: 4px;">
+            <img src="/cici_avatar.png" alt="Cici" class="cici-avatar-small" />
+            Cici 希
+          </span>
+          <div class="typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
       <!-- Scroll to bottom indicator -->
       <div ref="bottomAnchor"></div>
     </div>
 
     <!-- INPUT BAR -->
     <div class="chat-input-bar">
+      <!-- Mention Menu -->
+      <div v-if="showMentionMenu" class="mention-menu animate-fade-in">
+        <button class="mention-item" @click="insertMention('Cici')">
+          <div class="mention-avatar-image">
+            <img src="/cici_avatar.png" alt="Cici avatar" />
+          </div>
+          <div class="mention-info">
+            <span class="mention-name">Cici 希</span>
+            <span class="mention-desc">AI Assistant</span>
+          </div>
+        </button>
+      </div>
+
       <div class="input-wrapper">
         <textarea
           ref="inputField"
@@ -106,7 +133,7 @@
           rows="1"
           maxlength="1000"
           class="chat-input"
-          @input="autoResize"
+          @input="handleInput"
         ></textarea>
         <button 
           class="send-btn" 
@@ -165,6 +192,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { chatService } from '@/services/chatService'
 import { useChatBadge } from '@/composables/useChatBadge'
+import { askCici } from '@/services/aiService'
 
 const { currentUser } = useAuth()
 const { resetBadge } = useChatBadge()
@@ -175,6 +203,9 @@ const isLoading = ref(true)
 const isSending = ref(false)
 const isLoadingOlder = ref(false)
 const hasOlderMessages = ref(true)
+
+const showMentionMenu = ref(false)
+const isCiciTyping = ref(false)
 
 const messagesContainer = ref(null)
 const bottomAnchor = ref(null)
@@ -286,6 +317,7 @@ const sendMessage = async () => {
   
   isSending.value = true
   newMessage.value = ''
+  showMentionMenu.value = false
   resetTextareaHeight()
 
   try {
@@ -303,6 +335,11 @@ const sendMessage = async () => {
     resetBadge()
     await nextTick()
     scrollToBottom()
+
+    // AI Trigger check
+    if (content.includes('@Cici')) {
+      triggerAiAssistant(content, userId)
+    }
   } catch (err) {
     console.error(err)
     alert('Gagal mengirim pesan: ' + err.message)
@@ -312,6 +349,20 @@ const sendMessage = async () => {
     isSending.value = false
     inputField.value?.focus()
   }
+}
+
+const triggerAiAssistant = async (question, userId) => {
+  isCiciTyping.value = true
+  nextTick(() => scrollToBottom())
+  
+  const result = await askCici(question, userId)
+  
+  if (!result.success && result.error) {
+    alert(result.error)
+  }
+  
+  isCiciTyping.value = false
+  nextTick(() => scrollToBottom())
 }
 
 const showDeleteDialog = ref(false)
@@ -443,6 +494,7 @@ const autoResizeEdit = (e) => {
 // ============ HELPERS ============
 
 const isOwnMessage = (msg) => msg.user_id === currentUser.value?.id
+const isAiMessage = (msg) => msg.author_roles && msg.author_roles.includes('ai_assistant')
 
 const isNearBottom = () => {
   const container = messagesContainer.value
@@ -459,6 +511,48 @@ const scrollToBottom = () => {
 
 const handleScroll = () => {
   // Bisa dipakai untuk trigger loadOlder otomatis di masa depan
+}
+
+// ============ AI & MENTIONS ============
+
+const handleInput = (e) => {
+  autoResize()
+  
+  const val = newMessage.value
+  const cursorP = e.target.selectionStart
+  const textBeforeCursor = val.slice(0, cursorP)
+  
+  // Deteksi jika mengetik @ atau @C..
+  const match = textBeforeCursor.match(/@(\w*)$/)
+  if (match) {
+    const query = match[1].toLowerCase()
+    if ('cici'.startsWith(query)) {
+      showMentionMenu.value = true
+    } else {
+      showMentionMenu.value = false
+    }
+  } else {
+    showMentionMenu.value = false
+  }
+}
+
+const insertMention = (name) => {
+  const val = newMessage.value
+  const cursorP = inputField.value?.selectionStart || val.length
+  const textBeforeCursor = val.slice(0, cursorP)
+  const textAfterCursor = val.slice(cursorP)
+  
+  const replacedBefore = textBeforeCursor.replace(/@\w*$/, `@${name} `)
+  newMessage.value = replacedBefore + textAfterCursor
+  showMentionMenu.value = false
+  inputField.value?.focus()
+  
+  nextTick(() => {
+    const newPos = replacedBefore.length
+    if (inputField.value) {
+      inputField.value.setSelectionRange(newPos, newPos)
+    }
+  })
 }
 
 const autoResize = () => {
@@ -892,6 +986,7 @@ const getSenderColor = (roles) => {
 
 /* ========== INPUT BAR ========== */
 .chat-input-bar {
+  position: relative;
   padding: 0.6rem 1rem;
   background: var(--c-surface);
   border-top: 1px solid var(--c-border);
@@ -970,6 +1065,144 @@ const getSenderColor = (roles) => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* ========== AI & MENTION STYLES ========== */
+.ai-bubble {
+  background: linear-gradient(135deg, #fff5f8 0%, #fdf4ff 50%, #fae8ff 100%) !important;
+  border: 1.5px solid #fbcfe8 !important;
+  border-radius: 20px 20px 20px 6px !important;
+  box-shadow: 
+    0 4px 14px rgba(244, 114, 182, 0.15), 
+    inset 0 2px 6px rgba(255, 255, 255, 1) !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.ai-bubble .msg-text {
+  color: #831843 !important;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.ai-bubble .sender-name {
+  color: #db2777 !important;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  background: linear-gradient(90deg, #db2777, #9333ea);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ai-bubble .msg-time, .ai-bubble .msg-edited {
+  color: #f472b6 !important;
+  font-weight: 600;
+}
+
+.mention-menu {
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 1rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 0.35rem;
+  z-index: 100;
+  min-width: 180px;
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.mention-item:hover {
+  background: var(--c-bg);
+}
+
+.mention-avatar-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.2);
+  flex-shrink: 0;
+}
+
+.mention-avatar-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cici-avatar-small {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 1px 3px rgba(139, 92, 246, 0.3);
+}
+
+.mention-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mention-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--c-text-main);
+}
+
+.mention-desc {
+  font-size: 0.65rem;
+  color: var(--c-text-muted);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* Typing Dots */
+.typing-bubble {
+  padding: 0.8rem 1rem !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 12px;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background-color: #db2777;
+  border-radius: 50%;
+  animation: typing 1.4s infinite both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
 }
 
 /* ========== RESPONSIVE ========== */

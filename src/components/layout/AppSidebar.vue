@@ -75,6 +75,13 @@
           <span class="icon"><User :size="20" /></span>
           <span class="nav-label">Profile</span>
         </router-link>
+
+        <router-link to="/cici-chat" class="nav-item nav-cici">
+          <div class="icon-wrapper cici-nav-icon">
+             <img src="/cici_avatar.png" alt="Cici" />
+          </div>
+          <span class="nav-label cici-label">Cici 希</span>
+        </router-link>
       </div>
     </nav>
   </aside>
@@ -178,6 +185,49 @@ const { unreadCount } = useChatBadge()
   z-index: 2;
 }
 
+/* ========== CICI NAV ITEM ========== */
+.nav-cici {
+  position: relative;
+  overflow: hidden;
+}
+
+.cici-nav-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  padding: 1.5px;
+  background: linear-gradient(135deg, #fbcfe8, #d8b4fe);
+  box-shadow: 0 2px 8px rgba(244, 114, 182, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cici-nav-icon img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid white;
+}
+
+.cici-label {
+  background: linear-gradient(90deg, #db2777, #9333ea);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800 !important;
+}
+
+.nav-cici:hover {
+  background: #fdf2f8 !important;
+}
+
+.nav-cici.router-link-active {
+  background: #fce7f3 !important;
+  box-shadow: inset 4px 0 0 #f472b6;
+}
+
 @media (max-width: 768px) {
   .app-sidebar {
     width: 100%;
@@ -236,6 +286,17 @@ const { unreadCount } = useChatBadge()
   .nav-item.router-link-active {
     background-color: transparent;
     color: var(--c-primary);
+  }
+
+  .nav-cici.router-link-active {
+    background: transparent !important;
+    box-shadow: none;
+  }
+  
+  .nav-cici.router-link-active .cici-nav-icon {
+    transform: scale(1.15) translateY(-2px);
+    box-shadow: 0 4px 12px rgba(244, 114, 182, 0.6);
+    transition: all 0.2s;
   }
 }
 </style>

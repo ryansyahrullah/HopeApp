@@ -1,7 +1,12 @@
 -- ==============================================
 -- HopeApp - POLIBAN | Database Schema v2
--- Jalankan SQL ini di Supabase SQL Editor
 -- ==============================================
+
+-- 0. Dummy AI Account
+-- Digunakan untuk insert pesan dari bot Cici
+INSERT INTO auth.users (id, email)
+VALUES ('00000000-0000-0000-0000-00000000c1c1', 'cici@hopeapp.ai')
+ON CONFLICT (id) DO NOTHING;
 
 -- 1. Profiles (extend Supabase auth.users)
 CREATE TABLE IF NOT EXISTS profiles (
@@ -18,6 +23,16 @@ CREATE TABLE IF NOT EXISTS profiles (
   is_registered BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Tambahkan profil Cici
+INSERT INTO public.profiles (id, full_name, email, roles)
+VALUES (
+  '00000000-0000-0000-0000-00000000c1c1', 
+  'Cici 希', 
+  'cici@hopeapp.ai', 
+  '{ai_assistant}'
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- 2. Meetings (Pertemuan)
 CREATE TABLE IF NOT EXISTS meetings (
