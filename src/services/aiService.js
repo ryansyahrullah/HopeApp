@@ -26,7 +26,7 @@ function trackRequest() {
  * @param {boolean} isPrivate - If true, Edge Function will NOT save the answer to the public group chat DB.
  * @returns {Promise<{ success: boolean, message?: object, answer?: string, error?: string }>}
  */
-export async function askCici(question, userId, isPrivate = false) {
+export async function askCici(question, userId, isPrivate = false, history = []) {
   // Client-side rate limiting
   if (isRateLimited()) {
     return {
@@ -39,7 +39,7 @@ export async function askCici(question, userId, isPrivate = false) {
 
   try {
     const { data, error } = await supabase.functions.invoke('ask-cici', {
-      body: { question, userId, isPrivate }
+      body: { question, userId, isPrivate, history }
     })
 
     if (error) throw error

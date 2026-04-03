@@ -49,7 +49,7 @@
           <p>Saya Cici, asisten pribadi kamu. Kamu bisa tanyakan apa saja tentang kelas, tugas, atau belajar Bahasa Mandarin.</p>
           
           <div class="suggested-questions">
-            <button class="suggestion-btn" @click="sendSuggestion('Bagaimana kehadiranku sejauh ini?')">📊 Info Absensiku</button>
+            <button class="suggestion-btn" @click="sendSuggestion('Tolong jelaskan penggunaan nada dalam Pinyin')">🇨🇳 Belajar Pinyin</button>
             <button class="suggestion-btn" @click="sendSuggestion('Apa bahasa Mandarinnya Semangat?')">🇨🇳 Translate Mandarin</button>
           </div>
         </div>
@@ -236,6 +236,13 @@ const sendMessage = async () => {
   const userId = currentUser.value?.id
   if (!userId) return
 
+  // Extract history BEFORE adding the new message
+  // Get last 10 messages max
+  const history = messages.value.slice(-10).map(m => ({
+    isOwn: m.isOwn,
+    content: m.content
+  }))
+
   // 1. Add user message
   const userMsg = {
     isOwn: true,
@@ -254,7 +261,7 @@ const sendMessage = async () => {
   scrollToBottom()
   
   try {
-    const result = await askCici(content, userId, true) // isPrivate = true
+    const result = await askCici(content, userId, true, history) // isPrivate = true
     
     if (result.success) {
       const responseText = result.answer || (result.message && result.message.content) || "..."
@@ -265,7 +272,12 @@ const sendMessage = async () => {
       })
       saveSession()
     } else if (result.error) {
-      alert("Error: " + result.error)
+      messages.value.push({
+        isOwn: false,
+        content: `⚠️ ${result.error}`,
+        created_at: new Date().toISOString()
+      })
+      saveSession()
     }
   } catch (e) {
     console.error(e)

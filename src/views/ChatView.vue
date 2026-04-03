@@ -344,7 +344,7 @@ const sendMessage = async () => {
     scrollToBottom()
 
     // AI Trigger check
-    if (content.includes('@Cici')) {
+    if (content.toLowerCase().includes('@cici')) {
       triggerAiAssistant(content, userId)
     }
   } catch (err) {
@@ -362,10 +362,24 @@ const triggerAiAssistant = async (question, userId) => {
   isCiciTyping.value = true
   nextTick(() => scrollToBottom())
   
-  const result = await askCici(question, userId)
+  // Ambil history 10 chat terakhir, sebelum pesan bot
+  const history = messages.value.slice(-10).map(m => ({
+    isOwn: m.user_id === userId,
+    content: m.content
+  }))
+  
+  const result = await askCici(question, userId, false, history)
   
   if (!result.success && result.error) {
-    alert(result.error)
+    // Tampilkan error sebagai local bubble
+    messages.value.push({
+      id: 'error-local-' + Date.now(),
+      user_id: 'system',
+      author_name: 'System',
+      author_roles: ['admin'], // supaya distinct
+      content: `⚠️ Cici gagal merespons: ${result.error}`,
+      created_at: new Date().toISOString()
+    })
   }
   
   isCiciTyping.value = false
