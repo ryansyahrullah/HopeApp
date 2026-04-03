@@ -29,7 +29,7 @@
          ============================================== -->
     <div class="mobile-dashboard-header mobile-only">
        <div class="mobile-top-content">
-          <p style="opacity: 0.9; font-size: 0.9rem; margin-bottom: 0.2rem;">Good Day, {{ firstName }}! ✨</p>
+          <p style="opacity: 0.9; font-size: 0.9rem; margin-bottom: 0.2rem;">你好 (nǐ hǎo), {{ firstName }}! ✨</p>
           <h2 style="font-size: 1.3rem; font-weight: 700; color: white;">HopeApp POLIBAN</h2>
        </div>
        <div class="mobile-bg-extender"></div>
