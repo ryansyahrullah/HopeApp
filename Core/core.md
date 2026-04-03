@@ -1,7 +1,7 @@
 # HopeApp — Core System Documentation
 
-> **Versi:** 1.8.7  
-> **Terakhir diperbarui:** 3 April 2026  
+> **Versi:** 1.12.6  
+> **Terakhir diperbarui:** 3 April 2026 (Fitur AI Cici terintegrasi)  
 > **Stack:** Vue 3 + Vite + Supabase + Vercel  
 > **Tujuan:** Portal koordinasi kelas Bahasa Mandarin program HOPE — POLIBAN
 
@@ -38,6 +38,7 @@ HopeApp adalah web application untuk mengelola kelas Bahasa Mandarin di POLIBAN.
 │  │  resumeService.js              │                   │
 │  │  dashboardService.js           │                   │
 │  │  feedbackService.js            │                   │
+│  │  aiService.js (Gemini API)     │                   │
 │  └────┬───────────────────────────┘                   │
 │       │                                                 │
 │  ┌────▼─────────────────────────────┐                   │
@@ -102,7 +103,8 @@ d:\HopeApp\
 │   │   ├── resumeService.js       ← CRUD resumes via Supabase
 │   │   ├── profileService.js      ← CRUD profiles via Supabase
 │   │   ├── dashboardService.js    ← Aggregate stats queries
-│   │   └── feedbackService.js     ← Insert & get feedbacks via Supabase
+│   │   ├── feedbackService.js     ← Insert & get feedbacks via Supabase
+│   │   └── aiService.js           ← Integrasi Google Gemini via Supabase Edge Function
 │   ├── router/
 │   │   └── index.js               ← Vue Router config + auth navigation guard (cached profile)
 │   ├── components/
@@ -130,6 +132,7 @@ d:\HopeApp\
 │       ├── CompleteProfileView.vue← Onboarding profil mahasiswa baru
 │       ├── DashboardView.vue      ← Dashboard utama (optimistic UI, bento grid stats)
 │       ├── ChatView.vue           ← Real-time class chat group (multiline, bottom pinned)
+│       ├── CiciChatView.vue       ← Private AI Assistant Chat (local persistence)
 │       ├── MeetingsView.vue       ← List pertemuan (grid + mobile list)
 │       ├── MeetingDetailView.vue  ← Detail 1 pertemuan (materi + presensi + resume)
 │       ├── PresensiView.vue       ← Matriks rekap presensi semua mahasiswa

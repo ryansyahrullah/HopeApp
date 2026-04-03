@@ -254,8 +254,7 @@ const sendMessage = async () => {
 .cici-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
   background: var(--c-surface);
   position: relative;
 }
@@ -270,6 +269,7 @@ const sendMessage = async () => {
   border-bottom: 1px solid var(--c-border);
   box-shadow: 0 4px 20px rgba(244, 114, 182, 0.08);
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .header-content {
