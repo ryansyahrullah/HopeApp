@@ -80,12 +80,20 @@ const isFullscreenRoute = computed(() => ['/chat'].includes(route.path))
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
 }
 
 @media (max-width: 768px) {
   .main-content {
     padding: 1rem;
     padding-bottom: 80px; /* Room for bottom nav */
+  }
+
+  .fullscreen-content {
+    padding-bottom: 0 !important; /* Chat tidak butuh ruang bottom nav */
+    height: 100vh;
+    height: 100dvh;
   }
 }
 
