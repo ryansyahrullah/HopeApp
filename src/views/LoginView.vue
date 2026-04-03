@@ -154,12 +154,8 @@ const loginWithEmail = async () => {
   clearMessages()
   isProcessing.value = true
   try {
-    // Verify Turnstile before login
+    // Verify Turnstile before login (null = not enabled, proceed without captcha)
     const token = await executeTurnstile()
-    if (!token) {
-      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
-      return
-    }
 
     await authSignIn(email.value, password.value, token)
     router.push('/')
@@ -169,6 +165,8 @@ const loginWithEmail = async () => {
       errorMessage.value = 'Email atau password salah.'
     } else if (error.message?.includes('Email not confirmed')) {
       errorMessage.value = 'Email belum dikonfirmasi. Cek inbox Anda.'
+    } else if (error.message?.includes('captcha')) {
+      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
     } else {
       errorMessage.value = error.message || 'Terjadi kesalahan saat login.'
     }
@@ -193,18 +191,18 @@ const sendResetLink = async () => {
   clearMessages()
   isProcessing.value = true
   try {
-    // Verify Turnstile before sending reset link
+    // Verify Turnstile before sending reset link (null = not enabled)
     const token = await executeTurnstile()
-    if (!token) {
-      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
-      return
-    }
 
     await resetPassword(resetEmail.value, token)
     successMessage.value = `Link reset sandi telah dikirim ke ${resetEmail.value}. Cek inbox atau folder spam Anda.`
   } catch (error) {
     resetTurnstile()
-    errorMessage.value = error.message || 'Gagal mengirim link reset.'
+    if (error.message?.includes('captcha')) {
+      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
+    } else {
+      errorMessage.value = error.message || 'Gagal mengirim link reset.'
+    }
   } finally {
     isProcessing.value = false
   }

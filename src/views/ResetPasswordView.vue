@@ -146,12 +146,8 @@ const handleReset = async () => {
 
   isProcessing.value = true
   try {
-    // Verify Turnstile before updating password
-    const token = await executeTurnstile()
-    if (!token) {
-      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
-      return
-    }
+    // Verify Turnstile before updating password (null = not enabled)
+    await executeTurnstile()
 
     const { error } = await supabase.auth.updateUser({
       password: newPassword.value
@@ -168,6 +164,8 @@ const handleReset = async () => {
       errorMessage.value = 'Sandi baru tidak boleh sama dengan sandi lama.'
     } else if (error.message?.includes('weak_password')) {
       errorMessage.value = 'Sandi terlalu lemah. Gunakan minimal 6 karakter.'
+    } else if (error.message?.includes('captcha')) {
+      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
     } else {
       errorMessage.value = error.message || 'Gagal mengubah sandi. Silakan coba lagi.'
     }

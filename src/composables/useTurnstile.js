@@ -1,26 +1,38 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
-const SITE_KEY = '0x4AAAAAAACznIAR1LQgLgMND'
+// Site Key dari environment variable (public key — aman di frontend)
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
 
-// ⚠️ SET KE false UNTUK MENGAKTIFKAN KEMBALI TURNSTILE
-const BYPASS_TURNSTILE = true
+// ⚠️ Turnstile otomatis nonaktif jika SITE_KEY kosong / belum di-set
+const IS_ENABLED = !!SITE_KEY
 
 /**
  * Composable for Cloudflare Turnstile (invisible mode)
+ * 
+ * Supabase Auth sudah punya built-in Captcha verification.
+ * Token dari Turnstile dikirim via options.captchaToken pada:
+ * - signInWithPassword()
+ * - signUp()
+ * - resetPasswordForEmail()
+ * 
+ * Supabase backend akan verifikasi token langsung ke Cloudflare 
+ * menggunakan Secret Key yang di-set di Supabase Dashboard.
+ * 
+ * TIDAK perlu Edge Function — semua handled otomatis oleh Supabase.
+ * 
  * Usage:
  *   const { turnstileToken, executeTurnstile, resetTurnstile, turnstileContainerRef } = useTurnstile()
- *   
  *   In template: <div ref="turnstileContainerRef"></div>
- *   Before submit: await executeTurnstile()
+ *   Before submit: const token = await executeTurnstile()
  */
 export function useTurnstile() {
   const turnstileToken = ref('')
   const turnstileContainerRef = ref(null)
-  const isReady = ref(BYPASS_TURNSTILE)
+  const isReady = ref(!IS_ENABLED)
   let widgetId = null
 
-  // Jika bypass aktif, return dummy functions
-  if (BYPASS_TURNSTILE) {
+  // Jika Turnstile tidak aktif (belum set SITE_KEY), return dummy functions
+  if (!IS_ENABLED) {
     return {
       turnstileToken,
       turnstileContainerRef,
@@ -88,12 +100,12 @@ export function useTurnstile() {
 
   /**
    * Execute the invisible challenge.
-   * Returns the token string, or empty string if failed.
+   * Returns the token string, or null if failed/not ready.
    */
   async function executeTurnstile() {
     if (!window.turnstile || widgetId === null) {
       console.warn('[Turnstile] Not ready, skipping verification')
-      return ''
+      return null
     }
 
     // Reset before executing only if it already has a token
@@ -107,7 +119,7 @@ export function useTurnstile() {
     } catch(e) {
       console.warn("Turnstile execute error:", e)
       window.turnstile.reset(widgetId)
-      return ''
+      return null
     }
 
     return new Promise((resolve) => {
@@ -122,7 +134,7 @@ export function useTurnstile() {
           if (turnstileToken.value === 'ERROR') {
             window.turnstile.reset(widgetId)
             turnstileToken.value = ''
-            resolve('')
+            resolve(null)
           } else {
             resolve(turnstileToken.value)
           }
@@ -136,7 +148,7 @@ export function useTurnstile() {
           console.warn('[Turnstile] Execution timeout')
           window.turnstile.reset(widgetId)
           turnstileToken.value = ''
-          resolve('')
+          resolve(null)
         }
       }, 8000)
     })
