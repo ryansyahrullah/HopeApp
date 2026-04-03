@@ -335,7 +335,7 @@ router.beforeEach(async (to, from, next) => {
 | full_name | TEXT | Nama lengkap |
 | email | TEXT | Email user |
 | nim | TEXT | Nomor Induk Mahasiswa |
-| student_number | TEXT | Nomor Anggota HOPE (H-001, dll) |
+| student_number | TEXT | Nomor Anggota HOPE (D001, dll) |
 | jurusan | TEXT | Jurusan kuliah |
 | prodi | TEXT | Program studi |
 | semester | INT | Semester aktif |

@@ -119,7 +119,7 @@
             </div>
             <div class="form-group">
               <label>Nomor Anggota HOPE</label>
-              <input type="text" v-model="editForm.student_number" placeholder="Cth: H-001" />
+              <input type="text" v-model="editForm.student_number" placeholder="Cth: D001" />
             </div>
             <div class="form-group">
               <label>Jurusan</label>

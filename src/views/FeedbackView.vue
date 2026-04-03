@@ -216,7 +216,7 @@ const submitFeedback = async () => {
   errorMessage.value = ''
 
   try {
-    // Bangun authorName: H-001 - Ryan
+    // Bangun authorName: D001 - Ryan
     const nim = currentUser.value?.student_number || 'Unknown ID'
     const fullName = currentUser.value?.full_name || 'Tanpa Nama'
     const shortName = fullName.split(' ')[0]

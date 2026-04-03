@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 export const feedbackService = {
   /**
    * Submit feedback baru
-   * @param {string} authorName - Format: "H-001 - Ryan"
+   * @param {string} authorName - Format: "D001 - Ryan"
    * @param {string} content - Isi masukan
    * @returns {Promise<Object>}
    */
