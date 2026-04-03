@@ -17,11 +17,27 @@
           </div>
         </div>
       </div>
-      
-      <!-- Clear chat button -->
-      <button v-if="messages.length > 0" class="clear-btn" @click="showDeleteDialog = true" title="Hapus Percakapan">
-        <Trash2 :size="18" />
-      </button>
+      <!-- Dropdown Menu -->
+      <div class="header-actions" style="position: relative;">
+        <button class="more-btn" @click="showMenu = !showMenu">
+          <MoreVertical :size="20" />
+        </button>
+
+        <Teleport to="body">
+          <div v-if="showMenu" class="menu-overlay" @click="showMenu = false"></div>
+        </Teleport>
+        
+        <Transition name="dropdown-fade">
+          <div v-if="showMenu" class="dropdown-menu">
+            <button class="menu-item" @click="refreshPage">
+              <RefreshCcw :size="16" /> Refresh
+            </button>
+            <button v-if="messages.length > 0" class="menu-item danger" @click="handleClearClick">
+              <Trash2 :size="16" /> Hapus Obrolan
+            </button>
+          </div>
+        </Transition>
+      </div>
     </div>
 
     <!-- MESSAGES AREA -->
@@ -124,7 +140,7 @@
 
 <script setup>
 import { ref, onMounted, nextTick, computed } from 'vue'
-import { SendHorizontal, Loader2, Trash2, ArrowLeft } from 'lucide-vue-next'
+import { SendHorizontal, Loader2, Trash2, ArrowLeft, MoreVertical, RefreshCcw } from 'lucide-vue-next'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { askCici } from '@/services/aiService'
@@ -135,6 +151,7 @@ const messages = ref([])
 const newMessage = ref('')
 const isSending = ref(false)
 const isCiciTyping = ref(false)
+const showMenu = ref(false)
 
 const messagesContainer = ref(null)
 const bottomAnchor = ref(null)
@@ -163,6 +180,16 @@ const executeClearChat = () => {
   messages.value = []
   localStorage.removeItem(storageKey.value)
   showDeleteDialog.value = false
+}
+
+const handleClearClick = () => {
+  showMenu.value = false
+  showDeleteDialog.value = true
+}
+
+const refreshPage = () => {
+  showMenu.value = false
+  window.location.reload()
 }
 
 const scrollToBottom = () => {
@@ -350,19 +377,82 @@ const sendMessage = async () => {
   font-weight: 500;
 }
 
-.clear-btn {
+.more-btn {
   background: transparent;
   border: none;
-  color: var(--c-text-muted);
+  color: var(--c-text-main);
   padding: 0.5rem;
   border-radius: 50%;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s;
 }
 
-.clear-btn:hover {
-  color: var(--c-danger);
-  background: rgba(220, 38, 38, 0.08);
+.more-btn:hover {
+  background: var(--c-bg);
+  color: var(--c-primary);
+}
+
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 0.35rem;
+  min-width: 180px;
+  border: 1px solid var(--c-border);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--c-text-main);
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.menu-item:hover {
+  background: var(--c-bg);
+}
+
+.menu-item.danger {
+  color: #dc2626;
+}
+
+.menu-item.danger:hover {
+  background: #fef2f2;
+}
+
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+  transition: opacity 0.2s, transform 0.2s;
+}
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 /* ========== MESSAGES AREA ========== */

@@ -14,6 +14,13 @@
           <p class="chat-subtitle">Grup Mahasiswa</p>
         </div>
       </div>
+      
+      <div class="chat-header-actions">
+        <button class="action-btn" @click="loadMessages" :disabled="isLoading" title="Refresh">
+          <Loader2 v-if="isLoading" class="spin-icon" :size="20" />
+          <RefreshCcw v-else :size="20" />
+        </button>
+      </div>
     </div>
 
     <!-- MESSAGES AREA -->
@@ -187,7 +194,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import { MessagesSquare, SendHorizontal, Loader2, ChevronUp, Trash2, ArrowLeft, Pencil } from 'lucide-vue-next'
+import { MessagesSquare, SendHorizontal, Loader2, ChevronUp, Trash2, ArrowLeft, Pencil, RefreshCcw } from 'lucide-vue-next'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { chatService } from '@/services/chatService'
@@ -654,6 +661,34 @@ const getSenderColor = (roles) => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--c-text-muted);
+  padding: 0.4rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: var(--c-bg);
+  color: var(--c-primary);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .back-btn {

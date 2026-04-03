@@ -36,8 +36,9 @@ const isFullscreenRoute = computed(() => ['/chat', '/cici-chat'].includes(route.
 <style scoped>
 .app-layout {
   display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background-color: var(--c-bg);
 }
 
@@ -52,6 +53,8 @@ const isFullscreenRoute = computed(() => ['/chat', '/cici-chat'].includes(route.
   display: flex;
   flex-direction: column;
   min-width: 0; /* Mencegah flex item membesar melewati layar */
+  height: 100%;
+  overflow: hidden;
 }
 
 .main-content {
@@ -80,8 +83,8 @@ const isFullscreenRoute = computed(() => ['/chat', '/cici-chat'].includes(route.
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: 100vh;
-  height: 100dvh;
+  flex: 1;
+  height: 100%;
 }
 
 @media (max-width: 768px) {
@@ -91,9 +94,8 @@ const isFullscreenRoute = computed(() => ['/chat', '/cici-chat'].includes(route.
   }
 
   .fullscreen-content {
-    padding-bottom: 0 !important; /* Chat tidak butuh ruang bottom nav */
-    height: 100vh;
-    height: 100dvh;
+    padding-bottom: 0 !important; /* Chat tidak butuh padding extra karena bottom nav ada di bawahnya */
+    flex: 1;
   }
 }
 </style>
