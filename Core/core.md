@@ -1,7 +1,7 @@
 # HopeApp — Core System Documentation
 
 > **Versi:** 1.12.6  
-> **Terakhir diperbarui:** 3 April 2026 (Fitur AI Cici terintegrasi)  
+> **Terakhir diperbarui:** 3 April 2026 (Fitur AI Cici & UI Polish)  
 > **Stack:** Vue 3 + Vite + Supabase + Vercel  
 > **Tujuan:** Portal koordinasi kelas Bahasa Mandarin program HOPE — POLIBAN
 
@@ -759,6 +759,8 @@ Connect GitHub repo → setiap push ke branch `main` akan auto-deploy.
 | **Native Mobile Polish** | Viewport lock (no zoom), tap highlight disabled, user-select disabled (kecuali input), 100dvh pinned input. Terasa seperti app native |
 | **Vendor Chunk Splitting** | Build di-split jadi chunk terpisah: vue, supabase, tiptap. Browser cache chunk vendor secara permanen |
 | **Turnstile Anti-Bot** | Keamanan Cloudflare di halaman Auth yang kebal dari VDOM recycle tanpa mengganggu UX |
+| **Private AI Assistant** | Integrasi Google Gemini 2.5 Flash via Supabase Edge Function (`ask-cici`). Chat privat (local persistence) dan chat grup (@mention) |
+| **Viewport Locking** | Strict UI clamping (height 100dvh) untuk mencegah scroll body ganda, memberikan feel aplikasi native yang solid |
 
 ---
 
@@ -852,6 +854,10 @@ input, textarea, [contenteditable="true"] {
 
 | Versi | Tanggal | Perubahan Utama |
 |---|---|---|
+| 1.12.6 | 3 April 2026 | **UI Layout Fix & Navigation Polish**: Perbaikan strict viewport clamping (100dvh) untuk mencegah scrolling ganda pada chat, penambahan menu dropdown 3-titik di Cici, dan tombol refresh di Grup Chat. |
+| 1.12.5 | 3 April 2026 | **AI Assistant "Cici 希" Integration**: Implementasi asisten AI menggunakan Gemini 2.5 Flash. Fitur: Private Chat (1-on-1) dengan LocalStorage persistence, Group Chat @mention, Typing Indicator, dan Custom AI Bubbles. |
+| 1.10.2 | 3 April 2026 | **Enhanced Chat Features**: Implementasi context menu (long press/right click) untuk Edit Pesan, Unread Badge di sidebar & dashboard, dan perbaikan stabilitas Realtime. |
+| 1.9.0 | 3 April 2026 | **Version Bump & Stability**: Sinkronisasi versi aplikasi di seluruh modul dan perbaikan minor pada login flow. |
 | 1.5.0 | 3 April 2026 | Modul Feedback (Masukan Mahasiswa) dengan dukungan Shareable View `/masukan`, Pagination Load-More, dan integrasi Google Translate. Desain UI Glassmorphism Premium. |
 | 1.4.0 | 3 April 2026 | Integrasi Cloudflare Turnstile (invisible mode) di login dan reset password dengan server-side verification di Supabase. |
 | 1.3.0 | 2 April 2026 | Migrasi Frontend-Only ke Full-Stack menggunakan Supabase. Implementasi Auth, RLS Policies, dan penggantian Service Layer Mocks ke API asli. |
