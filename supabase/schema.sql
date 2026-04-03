@@ -240,5 +240,11 @@ CREATE POLICY "messages_delete_own"
 CREATE POLICY "messages_delete_admin"
   ON messages FOR DELETE TO authenticated USING (public.has_role('admin'));
 
+-- Update: User bisa edit pesannya sendiri
+CREATE POLICY "messages_update_own"
+  ON messages FOR UPDATE TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
 -- Aktifkan Supabase Realtime untuk tabel messages
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;

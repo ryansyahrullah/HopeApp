@@ -46,27 +46,47 @@
             <span>{{ formatDateLabel(msg.created_at) }}</span>
           </div>
 
-          <div class="message-row" :class="{ 'own': isOwnMessage(msg) }">
-            <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg) }">
+          <div 
+            class="message-row" 
+            :class="{ 'own': isOwnMessage(msg) }"
+            @contextmenu.prevent="isOwnMessage(msg) ? showContextMenu($event, msg) : null"
+            @touchstart="isOwnMessage(msg) ? onTouchStart($event, msg) : null"
+            @touchend="onTouchEnd"
+            @touchmove="onTouchEnd"
+          >
+            <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg), 'editing-bubble': editingMessageId === msg.id }">
               <!-- Sender name (hanya untuk pesan orang lain) -->
               <span v-if="!isOwnMessage(msg)" class="sender-name" :style="{ color: getSenderColor(msg.author_roles) }">
                 {{ msg.author_name || 'Unknown' }}
                 <span v-if="msg.author_number" class="sender-badge">{{ msg.author_number }}</span>
               </span>
               
-              <p class="msg-text">{{ msg.content }}</p>
+              <!-- Edit Mode -->
+              <template v-if="editingMessageId === msg.id">
+                <textarea
+                  ref="editField"
+                  v-model="editContent"
+                  class="edit-textarea"
+                  rows="1"
+                  maxlength="1000"
+                  @input="autoResizeEdit"
+                  @keydown.escape="cancelEdit"
+                ></textarea>
+                <div class="edit-actions">
+                  <button class="edit-action-btn cancel-btn" @click="cancelEdit">Batal</button>
+                  <button class="edit-action-btn save-btn" @click="saveEdit(msg.id)" :disabled="!editContent.trim() || isSavingEdit">Simpan</button>
+                </div>
+              </template>
+
+              <!-- Normal Mode -->
+              <template v-else>
+                <p class="msg-text">{{ msg.content }}</p>
               
-              <div class="msg-meta">
-                <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
-                <button 
-                  v-if="isOwnMessage(msg)" 
-                  class="delete-msg-btn" 
-                  @click="promptDeleteMessage(msg.id)"
-                  title="Hapus pesan"
-                >
-                  <Trash2 :size="11" />
-                </button>
-              </div>
+                <div class="msg-meta">
+                  <span v-if="msg.is_edited" class="msg-edited">(diedit)</span>
+                  <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
+                </div>
+              </template>
             </div>
           </div>
         </template>
@@ -99,6 +119,31 @@
       </div>
     </div>
 
+    <!-- Context Menu -->
+    <Teleport to="body">
+      <div 
+        v-if="contextMenu.visible" 
+        class="context-overlay" 
+        @click="closeContextMenu"
+        @contextmenu.prevent="closeContextMenu"
+      >
+        <div 
+          class="context-menu" 
+          :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }"
+          @click.stop
+        >
+          <button class="context-menu-item" @click="startEdit(contextMenu.message)">
+            <Pencil :size="14" />
+            <span>Edit</span>
+          </button>
+          <button class="context-menu-item danger" @click="promptDeleteFromMenu">
+            <Trash2 :size="14" />
+            <span>Hapus</span>
+          </button>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- Confirm Delete Dialog -->
     <ConfirmDialog
       :visible="showDeleteDialog"
@@ -114,8 +159,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import { MessagesSquare, SendHorizontal, Loader2, ChevronUp, Trash2, ArrowLeft } from 'lucide-vue-next'
+import { ref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { MessagesSquare, SendHorizontal, Loader2, ChevronUp, Trash2, ArrowLeft, Pencil } from 'lucide-vue-next'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { chatService } from '@/services/chatService'
@@ -134,6 +179,7 @@ const hasOlderMessages = ref(true)
 const messagesContainer = ref(null)
 const bottomAnchor = ref(null)
 const inputField = ref(null)
+const editField = ref(null)
 
 let realtimeChannel = null
 
@@ -213,6 +259,14 @@ const subscribeToRealtime = () => {
     }
   }
 
+  // Attach update handler
+  onInsert._onUpdate = (updatedMsg) => {
+    const idx = messages.value.findIndex(m => m.id === updatedMsg.id)
+    if (idx !== -1) {
+      messages.value[idx] = { ...messages.value[idx], ...updatedMsg }
+    }
+  }
+
   // Attach delete handler
   onInsert._onDelete = (deletedId) => {
     messages.value = messages.value.filter(m => m.id !== deletedId)
@@ -283,6 +337,107 @@ const executeDeleteMessage = async () => {
     isDeletingMessage.value = false
     deleteTargetId.value = null
   }
+}
+
+// ============ CONTEXT MENU ============
+
+const contextMenu = reactive({ visible: false, x: 0, y: 0, message: null })
+let longPressTimer = null
+
+const showContextMenu = (event, msg) => {
+  // Posisi menu
+  const menuW = 150, menuH = 90
+  let x = event.clientX || event.touches?.[0]?.clientX || 0
+  let y = event.clientY || event.touches?.[0]?.clientY || 0
+  // Cegah keluar layar
+  if (x + menuW > window.innerWidth) x = window.innerWidth - menuW - 8
+  if (y + menuH > window.innerHeight) y = y - menuH
+  
+  contextMenu.x = x
+  contextMenu.y = y
+  contextMenu.message = msg
+  contextMenu.visible = true
+}
+
+const closeContextMenu = () => {
+  contextMenu.visible = false
+  contextMenu.message = null
+}
+
+const onTouchStart = (event, msg) => {
+  longPressTimer = setTimeout(() => {
+    // Haptic feedback (jika didukung)
+    if (navigator.vibrate) navigator.vibrate(30)
+    showContextMenu(event, msg)
+  }, 500)
+}
+
+const onTouchEnd = () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+}
+
+const promptDeleteFromMenu = () => {
+  const id = contextMenu.message?.id
+  closeContextMenu()
+  if (id) promptDeleteMessage(id)
+}
+
+// ============ EDIT MESSAGE ============
+
+const editingMessageId = ref(null)
+const editContent = ref('')
+const isSavingEdit = ref(false)
+
+const startEdit = (msg) => {
+  closeContextMenu()
+  editingMessageId.value = msg.id
+  editContent.value = msg.content
+  nextTick(() => {
+    const el = editField.value
+    // editField bisa berupa array karena v-for
+    const textarea = Array.isArray(el) ? el[0] : el
+    if (textarea) {
+      textarea.focus()
+      textarea.style.height = 'auto'
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px'
+    }
+  })
+}
+
+const cancelEdit = () => {
+  editingMessageId.value = null
+  editContent.value = ''
+}
+
+const saveEdit = async (msgId) => {
+  const content = editContent.value.trim()
+  if (!content) return
+
+  isSavingEdit.value = true
+  try {
+    const updated = await chatService.updateMessage(msgId, content)
+    // Update lokal
+    const idx = messages.value.findIndex(m => m.id === msgId)
+    if (idx !== -1) {
+      messages.value[idx] = { ...messages.value[idx], ...updated }
+    }
+    cancelEdit()
+  } catch (err) {
+    console.error(err)
+    alert('Gagal mengedit pesan: ' + err.message)
+  } finally {
+    isSavingEdit.value = false
+  }
+}
+
+const autoResizeEdit = (e) => {
+  const el = e.target
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px'
 }
 
 // ============ HELPERS ============
@@ -606,25 +761,124 @@ const getSenderColor = (roles) => {
   opacity: 0.7;
 }
 
-.delete-msg-btn {
-  background: none;
-  border: none;
+.msg-edited {
+  font-size: 0.55rem;
   color: var(--c-text-muted);
-  cursor: pointer;
-  padding: 0;
-  opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* ========== CONTEXT MENU ========== */
+.context-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.context-menu {
+  position: fixed;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  padding: 0.35rem;
+  min-width: 140px;
+  z-index: 10000;
+  animation: contextFadeIn 0.15s ease;
+}
+
+@keyframes contextFadeIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.context-menu-item {
   display: flex;
   align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--c-text-main);
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.message-row:hover .delete-msg-btn {
-  opacity: 0.6;
+.context-menu-item:hover {
+  background: var(--c-bg);
 }
 
-.delete-msg-btn:hover {
-  opacity: 1 !important;
+.context-menu-item.danger {
   color: var(--c-danger);
+}
+
+.context-menu-item.danger:hover {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+/* ========== EDIT MODE ========== */
+.editing-bubble {
+  border: 1.5px solid var(--c-primary) !important;
+  background: rgba(198, 40, 40, 0.04) !important;
+}
+
+.edit-textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--c-text-main);
+  resize: none;
+  max-height: 120px;
+  font-family: inherit;
+  padding: 0;
+  margin: 0.15rem 0;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.edit-action-btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cancel-btn {
+  background: var(--c-bg);
+  color: var(--c-text-muted);
+}
+
+.cancel-btn:hover {
+  background: var(--c-border);
+}
+
+.save-btn {
+  background: var(--c-primary);
+  color: white;
+}
+
+.save-btn:hover {
+  opacity: 0.9;
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ========== INPUT BAR ========== */

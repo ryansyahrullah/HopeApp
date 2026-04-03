@@ -60,6 +60,28 @@ export const chatService = {
   },
 
   /**
+   * Mengedit pesan
+   * @param {string} id - UUID pesan
+   * @param {string} newContent - Konten baru
+   * @returns {Promise<Object>}
+   */
+  async updateMessage(id, newContent) {
+    const { data, error } = await supabase
+      .from('messages')
+      .update({
+        content: newContent.trim(),
+        is_edited: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  /**
    * Menghapus pesan
    * @param {string} id - UUID pesan
    */
@@ -92,6 +114,13 @@ export const chatService = {
             .single()
 
           if (data) onInsert(data)
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'messages' },
+        (payload) => {
+          if (onInsert._onUpdate) onInsert._onUpdate(payload.new)
         }
       )
       .on(
