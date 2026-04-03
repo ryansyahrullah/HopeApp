@@ -9,7 +9,7 @@ export const chatService = {
   async getMessages(limit = 50) {
     const { data, error } = await supabase
       .from('messages')
-      .select('*, profiles:user_id(id, full_name, student_number, roles)')
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(limit)
 
@@ -27,7 +27,7 @@ export const chatService = {
   async loadOlderMessages(beforeTimestamp, limit = 30) {
     const { data, error } = await supabase
       .from('messages')
-      .select('*, profiles:user_id(id, full_name, student_number, roles)')
+      .select('*')
       .lt('created_at', beforeTimestamp)
       .order('created_at', { ascending: false })
       .limit(limit)
@@ -42,11 +42,17 @@ export const chatService = {
    * @param {string} content
    * @returns {Promise<Object>}
    */
-  async sendMessage(userId, content) {
+  async sendMessage(userId, content, authorName, authorNumber, authorRoles) {
     const { data, error } = await supabase
       .from('messages')
-      .insert({ user_id: userId, content: content.trim() })
-      .select('*, profiles:user_id(id, full_name, student_number, roles)')
+      .insert({ 
+        user_id: userId, 
+        content: content.trim(),
+        author_name: authorName,
+        author_number: authorNumber,
+        author_roles: authorRoles
+      })
+      .select('*')
       .single()
 
     if (error) throw error
@@ -78,10 +84,10 @@ export const chatService = {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         async (payload) => {
-          // Fetch full data with profile join
+          // Fetch full data
           const { data } = await supabase
             .from('messages')
-            .select('*, profiles:user_id(id, full_name, student_number, roles)')
+            .select('*')
             .eq('id', payload.new.id)
             .single()
 

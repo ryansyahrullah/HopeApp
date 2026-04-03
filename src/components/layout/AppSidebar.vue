@@ -60,7 +60,10 @@
         </router-link>
 
         <router-link to="/chat" class="nav-item">
-          <span class="icon"><MessageCircle :size="20" /></span>
+          <div class="icon-wrapper">
+            <span class="icon"><MessageCircle :size="20" /></span>
+            <span v-if="unreadCount > 0" class="chat-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+          </div>
           <span class="nav-label">Obrolan</span>
         </router-link>
       </template>
@@ -80,8 +83,10 @@
 <script setup>
 import { LayoutDashboard, CalendarDays, ClipboardCheck, FileText, User, UsersRound, GraduationCap, PieChart, Settings, MessageSquare, MessageCircle } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
+import { useChatBadge } from '@/composables/useChatBadge'
 
 const { isAdmin, isDosen, isMahasiswa } = useAuth()
+const { unreadCount } = useChatBadge()
 </script>
 
 <style scoped>
@@ -146,6 +151,31 @@ const { isAdmin, isDosen, isMahasiswa } = useAuth()
 
 .nav-item.router-link-active .icon {
   opacity: 1;
+}
+
+.icon-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.chat-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background-color: var(--c-danger);
+  color: #fbbf24; /* emas/kuning cerah */
+  font-size: 0.65rem;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--c-surface);
+  line-height: 1;
+  z-index: 2;
 }
 
 @media (max-width: 768px) {

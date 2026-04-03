@@ -214,6 +214,9 @@ CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
+  author_name TEXT NOT NULL DEFAULT 'Unknown',
+  author_number TEXT,
+  author_roles TEXT[] DEFAULT '{mahasiswa}',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

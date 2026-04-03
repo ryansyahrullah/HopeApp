@@ -1,6 +1,6 @@
 # HopeApp — Core System Documentation
 
-> **Versi:** 1.5.0  
+> **Versi:** 1.8.7  
 > **Terakhir diperbarui:** 3 April 2026  
 > **Stack:** Vue 3 + Vite + Supabase + Vercel  
 > **Tujuan:** Portal koordinasi kelas Bahasa Mandarin program HOPE — POLIBAN
@@ -129,6 +129,7 @@ d:\HopeApp\
 │       ├── LoginView.vue          ← Login (email + Google OAuth + forgot password + versi app)
 │       ├── CompleteProfileView.vue← Onboarding profil mahasiswa baru
 │       ├── DashboardView.vue      ← Dashboard utama (optimistic UI, bento grid stats)
+│       ├── ChatView.vue           ← Real-time class chat group (multiline, bottom pinned)
 │       ├── MeetingsView.vue       ← List pertemuan (grid + mobile list)
 │       ├── MeetingDetailView.vue  ← Detail 1 pertemuan (materi + presensi + resume)
 │       ├── PresensiView.vue       ← Matriks rekap presensi semua mahasiswa
@@ -491,6 +492,7 @@ getAllFeedback(page, limit)  → SELECT * FROM feedbacks RANGE(page, limit) ORDE
 - Cell menampilkan H (Hadir, hijau) atau A (Alpa, merah) atau - (belum diabsen)
 - Kolom terakhir: Total Alpa (highlight merah jika ≥ 3)
 - Klik nama mahasiswa → ContactModal (lihat detail + link WhatsApp)
+- Ekspor Data: Tombol "Export Excel" (.xlsx) untuk laporan presensi
 - Sticky first column saat horizontal scroll
 
 ### 7.6 ResumesView (`/resumes`)
@@ -751,8 +753,9 @@ Connect GitHub repo → setiap push ke branch `main` akan auto-deploy.
 | **PWA (Progressive Web App)** | Mendukung instalasi di homescreen HP dengan ikon Barongsai. Service worker untuk offline cache |
 | **Router Memory Caching** | Navigation guard menggunakan cache lokal dari `useAuth()` agar perpindahan menu instan tanpa fetch DB berulang |
 | **Optimistic UI** | Dashboard menampilkan layout + nilai default langsung tanpa loading spinner. Data asli mengisi secara reaktif |
-| **Native Mobile Polish** | Viewport lock (no zoom), tap highlight disabled, user-select disabled (kecuali input). Terasa seperti app native |
+| **Native Mobile Polish** | Viewport lock (no zoom), tap highlight disabled, user-select disabled (kecuali input), 100dvh pinned input. Terasa seperti app native |
 | **Vendor Chunk Splitting** | Build di-split jadi chunk terpisah: vue, supabase, tiptap. Browser cache chunk vendor secara permanen |
+| **Turnstile Anti-Bot** | Keamanan Cloudflare di halaman Auth yang kebal dari VDOM recycle tanpa mengganggu UX |
 
 ---
 

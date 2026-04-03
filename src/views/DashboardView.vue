@@ -89,7 +89,10 @@
             </router-link>
 
             <router-link to="/chat" class="shortcut-item">
-              <div class="shortcut-icon" style="background-color: #ecfdf5; color: #10b981;"><MessageCircle :size="24" stroke-width="2.5" /></div>
+              <div class="shortcut-icon-wrapper">
+                <div class="shortcut-icon" style="background-color: #ecfdf5; color: #10b981;"><MessageCircle :size="24" stroke-width="2.5" /></div>
+                <span v-if="unreadCount > 0" class="shortcut-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+              </div>
               <span class="shortcut-label">Obrolan</span>
             </router-link>
           </template>
@@ -336,6 +339,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { Plus, CheckCircle, Users, CalendarDays, Sparkles, BookOpen, Trophy, BookX, ClipboardCheck, Rocket, PieChart, UsersRound, GraduationCap, MessageSquare, MessageCircle } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
+import { useChatBadge } from '@/composables/useChatBadge'
 import { dashboardService } from '@/services/dashboardService'
 import BaseButton from '@/components/common/BaseButton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -343,6 +347,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 
 const { roleName, isAdmin, isDosen, isMahasiswa, currentUser } = useAuth()
+const { unreadCount } = useChatBadge()
 
 const firstName = computed(() => {
   if (!currentUser.value?.full_name) return 'Pengguna'
@@ -459,6 +464,32 @@ onMounted(() => {
 
 .shortcut-item:hover .shortcut-icon {
   opacity: 0.85;
+}
+
+.shortcut-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.shortcut-badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  background-color: var(--c-danger);
+  color: #fbbf24;
+  font-size: 0.6rem;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--c-surface);
+  line-height: 1;
+  z-index: 3;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
 }
 
 /* Hardcoded beautiful soft colors for icons */

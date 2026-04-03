@@ -49,9 +49,9 @@
           <div class="message-row" :class="{ 'own': isOwnMessage(msg) }">
             <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg) }">
               <!-- Sender name (hanya untuk pesan orang lain) -->
-              <span v-if="!isOwnMessage(msg)" class="sender-name" :style="{ color: getSenderColor(msg.profiles) }">
-                {{ msg.profiles?.full_name || 'Unknown' }}
-                <span v-if="msg.profiles?.student_number" class="sender-badge">{{ msg.profiles.student_number }}</span>
+              <span v-if="!isOwnMessage(msg)" class="sender-name" :style="{ color: getSenderColor(msg.author_roles) }">
+                {{ msg.author_name || 'Unknown' }}
+                <span v-if="msg.author_number" class="sender-badge">{{ msg.author_number }}</span>
               </span>
               
               <p class="msg-text">{{ msg.content }}</p>
@@ -119,8 +119,10 @@ import { MessagesSquare, SendHorizontal, Loader2, ChevronUp, Trash2, ArrowLeft }
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { chatService } from '@/services/chatService'
+import { useChatBadge } from '@/composables/useChatBadge'
 
 const { currentUser } = useAuth()
+const { resetBadge } = useChatBadge()
 
 const messages = ref([])
 const newMessage = ref('')
@@ -138,12 +140,14 @@ let realtimeChannel = null
 // ============ LIFECYCLE ============
 
 onMounted(async () => {
+  resetBadge()
   await loadMessages()
   subscribeToRealtime()
   scrollToBottom()
 })
 
 onUnmounted(() => {
+  resetBadge()
   if (realtimeChannel) {
     chatService.unsubscribe(realtimeChannel)
   }
@@ -231,11 +235,18 @@ const sendMessage = async () => {
   resetTextareaHeight()
 
   try {
-    const sent = await chatService.sendMessage(userId, content)
+    const sent = await chatService.sendMessage(
+      userId, 
+      content,
+      currentUser.value?.full_name || 'Unknown',
+      currentUser.value?.student_number || null,
+      currentUser.value?.roles || ['mahasiswa']
+    )
     // Tambahkan langsung ke lokal (optimistic)
     if (!messages.value.some(m => m.id === sent.id)) {
       messages.value.push(sent)
     }
+    resetBadge()
     await nextTick()
     scrollToBottom()
   } catch (err) {
@@ -352,10 +363,10 @@ const getAvatarColor = (name) => {
   return avatarColors[Math.abs(hash) % avatarColors.length]
 }
 
-const getSenderColor = (profile) => {
-  if (!profile?.roles) return 'var(--c-text-main)'
-  if (profile.roles.includes('admin')) return 'var(--c-danger)'
-  if (profile.roles.includes('dosen')) return '#3b82f6'
+const getSenderColor = (roles) => {
+  if (!roles || !Array.isArray(roles)) return 'var(--c-text-main)'
+  if (roles.includes('admin')) return 'var(--c-danger)'
+  if (roles.includes('dosen')) return '#3b82f6'
   return '#2ecc71'
 }
 </script>
