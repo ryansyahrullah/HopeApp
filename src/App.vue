@@ -8,10 +8,8 @@
       <AppHeader v-if="!isAuthRoute && !isFullscreenRoute" />
       
       <main class="main-content" :class="{ 'auth-content': isAuthRoute, 'fullscreen-content': isFullscreenRoute }">
-        <router-view v-slot="{ Component, route }">
-          <transition name="page-fade" mode="out-in">
-            <component :is="Component" :key="route.path" />
-          </transition>
+        <router-view v-slot="{ Component }">
+          <component :is="Component" />
         </router-view>
       </main>
     </div>
@@ -101,21 +99,5 @@ const isFullscreenRoute = computed(() => ['/chat', '/cici-chat'].includes(route.
     flex: 1;
     min-height: 0;
   }
-}
-
-/* === PAGE TRANSITIONS === */
-.page-fade-enter-active,
-.page-fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.page-fade-enter-from {
-  opacity: 0;
-  transform: translateY(4px);
-}
-
-.page-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
 }
 </style>

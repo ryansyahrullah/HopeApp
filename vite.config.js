@@ -40,8 +40,6 @@ export default defineConfig({
     }
   },
   build: {
-    target: 'esnext',
-    cssCodeSplit: true,
     rollupOptions: {
       output: {
         // Pemisahan file (Chunk Splitting) untuk performa dan caching optimal
