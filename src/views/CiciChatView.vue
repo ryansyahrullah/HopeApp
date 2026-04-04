@@ -74,7 +74,8 @@
               </span>
               
               <div class="msg-content">
-                <p class="msg-text">{{ msg.content }}</p>
+                <p class="msg-text" v-html="formatMessage(msg.content)"></p>
+
                 <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
               </div>
             </div>
@@ -228,6 +229,21 @@ const formatTime = (dateStr) => {
   const d = new Date(dateStr)
   return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
 }
+
+const formatMessage = (text) => {
+  if (!text) return ''
+  // Escape HTML to prevent XSS
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+  
+  // Bold: **text** or ** text **
+  return escaped.replace(/\*\*\s*(.*?)\s*\*\*/g, '<strong>$1</strong>')
+}
+
 
 const sendMessage = async () => {
   const content = newMessage.value.trim()

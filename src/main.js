@@ -7,8 +7,10 @@ import { useAuth } from './composables/useAuth'
 const app = createApp(App)
 app.use(router)
 
-// Initialize Supabase auth listener before mounting
+// Initialize Supabase auth listener and state
 const { initAuth } = useAuth()
-initAuth().then(() => {
-  app.mount('#app')
-})
+initAuth()
+
+// Mount immediately - the router and components will handle the reactive auth state
+app.mount('#app')
+

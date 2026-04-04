@@ -3,9 +3,10 @@ import { supabase } from '@/lib/supabase'
 
 // Shared reactive state (singleton pattern)
 const session = ref(null)
-const profile = ref(null)
+const profile = ref(JSON.parse(localStorage.getItem('hopeapp_profile') || 'null'))
 const isAuthReady = ref(false)
 const isLoadingProfile = ref(false)
+
 
 // Fetch profile from Supabase
 async function fetchProfile(userId) {
@@ -25,8 +26,10 @@ async function fetchProfile(userId) {
     if (error) {
       console.error('[useAuth] Gagal fetch profile:', error.message)
       profile.value = null
+      localStorage.removeItem('hopeapp_profile')
     } else {
       profile.value = data
+      localStorage.setItem('hopeapp_profile', JSON.stringify(data))
       
       // Validasi apakah role aktif yang tersimpan masih valid untuk user ini
       if (activeRole.value && !data.roles?.includes(activeRole.value)) {
@@ -34,6 +37,7 @@ async function fetchProfile(userId) {
         localStorage.removeItem('hopeapp_active_role')
       }
     }
+
   } catch (e) {
     console.error('[useAuth] Exception:', e)
     profile.value = null
@@ -62,9 +66,21 @@ async function initAuth() {
       await fetchProfile(newSession?.user?.id)
     } else if (event === 'SIGNED_OUT') {
       profile.value = null
+      localStorage.removeItem('hopeapp_profile')
+    }
+  })
+
+  // NEW: Auto-reconnect/refresh when online
+  window.addEventListener('online', async () => {
+    console.log('[useAuth] Network restored, refreshing session...')
+    const { data: { session: currentSession } } = await supabase.auth.getSession()
+    session.value = currentSession
+    if (currentSession?.user) {
+      await fetchProfile(currentSession.user.id)
     }
   })
 }
+
 
 // Auth actions
 async function signInWithEmail(email, password, captchaToken) {

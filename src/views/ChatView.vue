@@ -88,7 +88,8 @@
 
               <!-- Normal Mode -->
               <template v-else>
-                <p class="msg-text">{{ msg.content }}</p>
+                <p class="msg-text" v-html="formatMessage(msg.content)"></p>
+
               
                 <div class="msg-meta">
                   <span v-if="msg.is_edited" class="msg-edited">(diedit)</span>
@@ -643,6 +644,21 @@ const getSenderColor = (roles) => {
   if (roles.includes('dosen')) return '#3b82f6'
   return '#2ecc71'
 }
+
+const formatMessage = (text) => {
+  if (!text) return ''
+  // Escape HTML to prevent XSS
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+  
+  // Bold: **text** or ** text **
+  return escaped.replace(/\*\*\s*(.*?)\s*\*\*/g, '<strong>$1</strong>')
+}
+
 </script>
 
 <style scoped>
