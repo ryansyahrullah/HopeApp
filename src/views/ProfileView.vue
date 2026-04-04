@@ -39,34 +39,8 @@
           <button class="edit-profile-btn" @click="openEditModal" title="Edit Profil">
             <Edit2 :size="14" /> Edit Profil
           </button>
-          <button class="anon-btn" @click="showAnonPopup = true" :class="{ 'is-anon': currentUser.is_anonymous }">
-            <Lock v-if="currentUser.is_anonymous" :size="14" />
-            <UserIcon v-else :size="14" />
-            Anonim
-          </button>
         </div>
 
-        <!-- ANONIM EXPLANATION POPUP -->
-        <Teleport to="body">
-          <div v-if="showAnonPopup" class="modal-overlay" @click.self="showAnonPopup = false">
-            <div class="modal-card anon-card animate-zoom-in">
-              <div class="modal-header">
-                <h3>Mode Anonim</h3>
-                <div class="toggle-switch" :class="{ 'on': currentUser.is_anonymous }" @click="toggleAnonStatus">
-                  <div class="switch-handle"></div>
-                </div>
-              </div>
-              <div class="modal-body">
-                <p class="anon-desc">
-                  Identitas Anda akan disembunyikan di grup chat (muncul sebagai "Pengguna Anonim") dan data pribadi Anda (NIM, Prodi, dkk) akan disensor dari mahasiswa lain. Admin & Dosen tetap dapat melihat data asli Anda untuk keperluan akademik.
-                </p>
-                <div class="modal-footer">
-                  <button class="submit-btn" @click="showAnonPopup = false" style="width: 100%; justify-content: center;">Tutup</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Teleport>
 
       </div>
     </div>
@@ -199,7 +173,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, reactive } from 'vue'
-import { BookOpen, BarChart, Settings, Lock, Edit2, Camera, Loader2, User as UserIcon } from 'lucide-vue-next'
+import { BookOpen, BarChart, Settings, Edit2, Camera, Loader2 } from 'lucide-vue-next'
 
 
 import { useAuth } from '@/composables/useAuth'
@@ -319,14 +293,6 @@ const handleAvatarUpload = async (event) => {
 }
 
 
-// Fitur Anonim
-const showAnonPopup = ref(false)
-const toggleAnonStatus = async () => {
-  const newStatus = !currentUser.value.is_anonymous
-  
-  // OPTIMISTIC UPDATE: Langsung update UI & Simpan antrean
-  enqueueProfileUpdate({ is_anonymous: newStatus })
-}
 
 
 
@@ -525,74 +491,6 @@ onMounted(() => loadStats())
   border-color: var(--c-primary);
   transform: translateY(-1px);
 }
-
-.anon-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.8rem;
-  background: var(--c-surface);
-  color: var(--c-text-muted);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.anon-btn.is-anon {
-  color: var(--c-success);
-  border-color: var(--c-success);
-  background: rgba(22, 163, 74, 0.05);
-}
-
-.anon-btn:hover {
-  transform: translateY(-1px);
-  border-color: currentColor;
-}
-
-/* Anonim Switch & Card */
-.anon-card {
-  max-width: 400px;
-}
-
-.anon-desc {
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--c-text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.toggle-switch {
-  width: 44px;
-  height: 24px;
-  background-color: #e2e8f0;
-  border-radius: 12px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.toggle-switch.on {
-  background-color: var(--c-success);
-}
-
-.switch-handle {
-  width: 18px;
-  height: 18px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-}
-
-.toggle-switch.on .switch-handle {
-  left: calc(100% - 21px);
-}
-
 
 /* Modal */
 .modal-overlay {
