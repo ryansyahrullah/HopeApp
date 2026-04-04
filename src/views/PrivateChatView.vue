@@ -39,22 +39,34 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="messages.length === 0" class="chat-empty">
+      <div v-else-if="messages.length === 0 && localPendingMessages.length === 0" class="chat-empty">
+
         <MessageSquare :size="48" style="opacity: 0.15;" />
         <p>Belum ada pesan pribadi. Kirim sapaan!</p>
       </div>
 
       <!-- Message Bubbles -->
       <template v-else>
-        <div v-for="msg in messages" :key="msg.id" class="message-row" :class="{ 'own': isOwnMessage(msg) }">
-          <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg) }">
-            <p class="msg-text" v-html="formatMessage(msg.content)"></p>
-            <div class="msg-meta">
-              <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
+        <template v-for="(msg, idx) in combinedMessages" :key="msg.id || msg.localId">
+          <div class="message-row" :class="{ 'own': isOwnMessage(msg) }">
+            <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg) }">
+              <p class="msg-text" v-html="formatMessage(msg.content)"></p>
+              <div class="msg-meta">
+                <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
+                <!-- Status Icons -->
+                <div v-if="isOwnMessage(msg)" class="msg-status">
+                  <Clock v-if="msg.status === 'pending'" :size="10" class="status-icon pending" />
+                  <template v-else>
+                     <CheckCheck v-if="msg.is_read" :size="10" class="status-icon read" />
+                     <Check v-else :size="10" class="status-icon sent" />
+                  </template>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
       </template>
+
 
       <div ref="bottomAnchor"></div>
     </div>
@@ -88,22 +100,35 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, SendHorizontal, Loader2, MessageSquare, RefreshCcw } from 'lucide-vue-next'
+import { ArrowLeft, SendHorizontal, Loader2, MessageSquare, RefreshCcw, Clock, Check, CheckCheck } from 'lucide-vue-next'
+
 import { useAuth } from '@/composables/useAuth'
 import { dmService } from '@/services/dmService'
 import { profileService } from '@/services/profileService'
+import { useMessageSync } from '@/composables/useMessageSync'
 
 import { useDMBadge } from '@/composables/useDMBadge'
 
 const route = useRoute()
 const router = useRouter()
 const { currentUser } = useAuth()
+const { pendingMessages, addPending } = useMessageSync()
 const { refreshUnreadCount } = useDMBadge()
 
 
 const otherUserId = computed(() => route.params.id)
 const otherUser = ref(null)
 const messages = ref([])
+
+const localPendingMessages = computed(() => {
+  return pendingMessages.value.filter(m => m.type === 'dm' && m.recipientId === otherUserId.value)
+})
+
+const combinedMessages = computed(() => {
+  const all = [...messages.value, ...localPendingMessages.value]
+  return all.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+})
+
 const newMessage = ref('')
 const isLoading = ref(true)
 const isSending = ref(false)
@@ -199,17 +224,14 @@ const sendMessage = async () => {
   resetTextareaHeight()
 
   try {
-    const sent = await dmService.sendPrivateMessage(
-      otherUserId.value, 
+    // Gunakan Antrean Sinkronisasi (Message Sync)
+    addPending('dm', {
+      recipientId: otherUserId.value,
       content,
-      currentUser.value?.full_name || 'Unknown',
-      currentUser.value?.avatar_url || null
-    )
+      authorName: currentUser.value?.full_name || 'Unknown',
+      authorAvatar: currentUser.value?.avatar_url || null
+    })
 
-    // Optimistic UI
-    if (!messages.value.some(m => m.id === sent.id)) {
-      messages.value.push(sent)
-    }
     await nextTick()
     scrollToBottom()
   } catch (err) {
@@ -221,6 +243,7 @@ const sendMessage = async () => {
     inputField.value?.focus()
   }
 }
+
 
 // Helpers
 const isOwnMessage = (msg) => msg.sender_id === currentUser.value?.id
@@ -391,6 +414,35 @@ const formatMessage = (text) => {
   font-size: 0.65rem;
   opacity: 0.7;
 }
+
+.msg-status {
+  display: flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.status-icon {
+  opacity: 0.8;
+}
+
+.status-icon.sent {
+  color: #94a3b8;
+}
+
+.status-icon.read {
+  color: #38bdf8; /* Blue checkmark */
+}
+
+.status-icon.pending {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
 
 /* ========== INPUT ========== */
 .chat-input-bar {

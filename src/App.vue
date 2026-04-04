@@ -23,12 +23,15 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from './composables/useAuth'
 import { useDMBadge } from './composables/useDMBadge'
 import { useAvatarSync } from './composables/useAvatarSync'
+import { useMessageSync } from './composables/useMessageSync'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
+
 import AppHeader from '@/components/layout/AppHeader.vue'
 
 const { initAuth, currentUser } = useAuth()
 const { refreshUnreadCount } = useDMBadge()
 const { processQueue } = useAvatarSync()
+const { syncPending } = useMessageSync()
 
 const route = useRoute()
 
@@ -38,12 +41,17 @@ onMounted(async () => {
   // Periksa antrean unggahan tertunda (Auto Sync)
   processQueue()
   
+  // Periksa antrean pesan tertunda (Message Sync)
+  syncPending()
+  
   // Listener untuk koneksi kembali online
   window.addEventListener('online', () => {
     console.log('[App] Koneksi kembali, memproses antrean...')
     processQueue()
+    syncPending()
   })
 })
+
 
 // Sembunyikan sidebar dan header jika di halaman standalone public/login
 const isAuthRoute = computed(() => ['/login', '/complete-profile', '/reset-password', '/masukan'].includes(route.path))

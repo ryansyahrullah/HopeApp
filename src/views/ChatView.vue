@@ -47,7 +47,8 @@
 
       <!-- Message Bubbles -->
       <template v-else>
-        <template v-for="(msg, idx) in messages" :key="msg.id">
+        <template v-for="(msg, idx) in combinedMessages" :key="msg.id || msg.localId">
+
           <!-- Date Separator -->
           <div v-if="showDateSeparator(idx)" class="date-separator">
             <span>{{ formatDateLabel(msg.created_at) }}</span>
@@ -117,6 +118,11 @@
                 <div class="msg-meta">
                   <span v-if="msg.is_edited" class="msg-edited">(diedit)</span>
                   <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
+                  <!-- Status Icons -->
+                  <div v-if="isOwnMessage(msg)" class="msg-status">
+                    <Clock v-if="msg.status === 'pending'" :size="10" class="status-icon pending" />
+                    <Check v-else :size="10" class="status-icon sent" />
+                  </div>
                 </div>
               </template>
             </div>
@@ -225,19 +231,41 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import { MessagesSquare, SendHorizontal, Loader2, ChevronUp, Trash2, ArrowLeft, Pencil, RefreshCcw } from 'lucide-vue-next'
+import { 
+  MessagesSquare, 
+  SendHorizontal, 
+  Loader2, 
+  ChevronUp, 
+  Trash2, 
+  ArrowLeft, 
+  Pencil, 
+  RefreshCcw,
+  Check,
+  Clock
+} from 'lucide-vue-next'
 import AppToast from '@/components/common/AppToast.vue'
 import UserProfileModal from '@/components/chat/UserProfileModal.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { chatService } from '@/services/chatService'
 import { useChatBadge } from '@/composables/useChatBadge'
+import { useMessageSync } from '@/composables/useMessageSync'
 import { askCici } from '@/services/aiService'
 
 const { currentUser } = useAuth()
 const { resetBadge } = useChatBadge()
+const { pendingMessages, addPending } = useMessageSync()
 
 const messages = ref([])
+const localPendingMessages = computed(() => {
+  return pendingMessages.value.filter(m => m.type === 'group')
+})
+
+const combinedMessages = computed(() => {
+  const all = [...messages.value, ...localPendingMessages.value]
+  return all.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+})
+
 const newMessage = ref('')
 const isLoading = ref(true)
 const isSending = ref(false)
@@ -364,46 +392,24 @@ const subscribeToRealtime = () => {
 // ============ SENDING ============
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || isSending.value) return
-  isSending.value = true
-  const content = newMessage.value
+  const text = newMessage.value.trim()
+  if (!text) return
+  
+  newMessage.value = ''
+  resetTextareaHeight()
 
-  try {
-    const sent = await chatService.sendMessage(
-      currentUser.value.id,
-      content,
-      currentUser.value.full_name,
-      currentUser.value.student_number || '?',
-      currentUser.value.roles,
-      currentUser.value.avatar_url,
-      currentUser.value.is_anonymous || false
-    )
-    
-    newMessage.value = ''
-    showMentionMenu.value = false
-    resetTextareaHeight()
-
-    // Tambahkan langsung ke lokal (optimistic)
-    if (!messages.value.some(m => m.id === sent.id)) {
-      messages.value.push(sent)
-    }
-    resetBadge()
-    await nextTick()
-    scrollToBottom()
-
-    // AI Trigger check
-    if (content.toLowerCase().includes('@cici')) {
-      triggerAiAssistant(content, userId)
-    }
-  } catch (err) {
-    console.error(err)
-    alert('Gagal mengirim pesan: ' + err.message)
-    // Kembalikan teks jika gagal
-    newMessage.value = content
-  } finally {
-    isSending.value = false
-    inputField.value?.focus()
-  }
+  // Gunakan Antrean Sinkronisasi (Message Sync)
+  addPending('group', {
+    content: text,
+    authorName: currentUser.value.full_name,
+    authorNumber: currentUser.value.student_number,
+    authorRoles: currentUser.value.roles,
+    authorAvatar: currentUser.value.avatar_url,
+    isAnonymous: !!localStorage.getItem('hopeapp_chat_anon')
+  })
+  
+  await nextTick()
+  scrollToBottom()
 }
 
 const triggerAiAssistant = async (question, userId) => {
@@ -672,8 +678,8 @@ const formatDateLabel = (isoString) => {
 
 const showDateSeparator = (idx) => {
   if (idx === 0) return true
-  const curr = new Date(messages.value[idx].created_at).toDateString()
-  const prev = new Date(messages.value[idx - 1].created_at).toDateString()
+  const curr = new Date(combinedMessages.value[idx].created_at).toDateString()
+  const prev = new Date(combinedMessages.value[idx - 1].created_at).toDateString()
   return curr !== prev
 }
 
@@ -1020,9 +1026,28 @@ const formatMessage = (text) => {
 }
 
 .msg-time {
-  font-size: 0.6rem;
-  color: var(--c-text-muted);
-  opacity: 0.7;
+  font-size: 0.65rem;
+  opacity: 0.6;
+}
+
+.msg-status {
+  display: flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.status-icon {
+  opacity: 0.8;
+}
+
+.status-icon.pending {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
 }
 
 .msg-edited {

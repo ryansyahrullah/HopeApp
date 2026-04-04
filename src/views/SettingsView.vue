@@ -40,7 +40,8 @@
         <p>Gunakan kata sandi yang kuat dan unik untuk menjaga keamanan akun Anda.</p>
       </div>
 
-      <p class="app-version-label">HopeApp POLIBAN — Versi 1.15.5</p>
+      <p class="app-version-label">HopeApp POLIBAN — Versi 1.16.1</p>
+
 
 
       
