@@ -724,7 +724,7 @@ const formatMessage = (text) => {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: 100%; /* Memenuhi container (fullscreen-content) */
+  height: 100dvh;
   background-color: var(--c-bg);
   overflow: hidden;
 }

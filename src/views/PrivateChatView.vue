@@ -287,7 +287,7 @@ const formatMessage = (text) => {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: 100%; /* Atau calc(100vh - 64px) jika header ada secara global */
+  height: 100dvh;
   background-color: var(--c-bg);
   overflow: hidden;
 }

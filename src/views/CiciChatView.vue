@@ -309,7 +309,7 @@ const sendMessage = async () => {
 .cici-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100dvh;
   background: var(--c-surface);
   position: relative;
   overflow: hidden;
