@@ -207,8 +207,9 @@ onMounted(() => {
 .inbox-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100dvh;
   background-color: var(--c-bg);
+  overflow: hidden;
 }
 
 .inbox-header {
@@ -217,6 +218,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -226,6 +228,7 @@ onMounted(() => {
   padding: 0 1.25rem 0.75rem 1.25rem;
   background: var(--c-surface);
   border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
 }
 
 .search-wrapper {

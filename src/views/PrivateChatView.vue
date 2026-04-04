@@ -302,6 +302,8 @@ const formatMessage = (text) => {
   justify-content: space-between;
   padding: 0 1.25rem;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
   z-index: 10;
 }
 
