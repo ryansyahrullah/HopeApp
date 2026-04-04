@@ -10,9 +10,15 @@
           
           <!-- Hover Overlay -->
           <div class="avatar-overlay">
-            <Loader2 v-if="isUploading" class="spin-icon" :size="24" />
+            <Loader2 v-if="isUploading || isSyncing" class="spin-icon" :size="24" />
             <Camera v-else :size="24" />
           </div>
+          
+          <!-- Sync Indicator (Mini) -->
+          <div v-if="isSyncing" class="sync-indicator-mini" title="Sinkronisasi foto...">
+             <Loader2 class="spin-icon" :size="12" />
+          </div>
+
         </div>
         <div class="role-ribbon">{{ roleLabel }}</div>
         
@@ -201,11 +207,14 @@ import { meetingService } from '@/services/meetingService'
 import { presensiService } from '@/services/presensiService'
 import { resumeService } from '@/services/resumeService'
 import { profileService } from '@/services/profileService'
+import { useAvatarSync } from '@/composables/useAvatarSync'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const { currentUser, roleName, isAdmin, isDosen, isMahasiswa, refreshProfile } = useAuth()
+const { isSyncing, enqueueUpload } = useAvatarSync()
+
 
 const userInitial = computed(() => {
   return (currentUser.value?.full_name || '?').charAt(0).toUpperCase()
@@ -292,24 +301,19 @@ const handleAvatarUpload = async (event) => {
 
   isUploading.value = true
   try {
-    const publicUrl = await profileService.uploadAvatar(currentUser.value.id, file)
-    
-    // Update profile in DB
-    await profileService.updateProfile(currentUser.value.id, { avatar_url: publicUrl })
-    
-    // Refresh global state
-    await refreshProfile()
-    
-    alert('Foto profil berhasil diperbarui!')
+    // Masukkan ke antrean sinkronisasi (Auto-Sync)
+    await enqueueUpload(file)
+    // alert('Foto profil sedang disinkronkan di latar belakang...')
   } catch (error) {
     console.error('Upload failed:', error)
-    alert('Gagal mengunggah foto: ' + error.message)
+    alert('Gagal memproses foto: ' + error.message)
   } finally {
     isUploading.value = false
     // Clear input
     if (fileInput.value) fileInput.value.value = ''
   }
 }
+
 
 // Fitur Anonim
 const showAnonPopup = ref(false)
@@ -444,6 +448,24 @@ onMounted(() => loadStats())
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+.sync-indicator-mini {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  background: var(--c-primary);
+  color: white;
+  border-radius: 50%;
+  border: 1px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
 
 
 .role-ribbon {

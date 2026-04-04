@@ -80,7 +80,8 @@
         </button>
 
         <!-- Versi Aplikasi -->
-        <p class="app-version">Versi 1.15.4</p>
+        <p class="app-version">Versi 1.15.5</p>
+
 
       </div>
 
