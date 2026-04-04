@@ -208,12 +208,16 @@ import { presensiService } from '@/services/presensiService'
 import { resumeService } from '@/services/resumeService'
 import { profileService } from '@/services/profileService'
 import { useAvatarSync } from '@/composables/useAvatarSync'
+import { useProfileSync } from '@/composables/useProfileSync'
 import BaseCard from '@/components/common/BaseCard.vue'
+
 import BaseButton from '@/components/common/BaseButton.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const { currentUser, roleName, isAdmin, isDosen, isMahasiswa, refreshProfile } = useAuth()
 const { isSyncing, enqueueUpload } = useAvatarSync()
+const { enqueueProfileUpdate } = useProfileSync()
+
 
 
 const userInitial = computed(() => {
@@ -319,13 +323,11 @@ const handleAvatarUpload = async (event) => {
 const showAnonPopup = ref(false)
 const toggleAnonStatus = async () => {
   const newStatus = !currentUser.value.is_anonymous
-  try {
-    await profileService.updateAnonymousStatus(currentUser.value.id, newStatus)
-    await refreshProfile()
-  } catch (e) {
-    alert('Gagal mengubah status anonim.')
-  }
+  
+  // OPTIMISTIC UPDATE: Langsung update UI & Simpan antrean
+  enqueueProfileUpdate({ is_anonymous: newStatus })
 }
+
 
 
 

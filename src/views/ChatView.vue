@@ -120,9 +120,13 @@
                   <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
                   <!-- Status Icons -->
                   <div v-if="isOwnMessage(msg)" class="msg-status">
-                    <Clock v-if="msg.status === 'pending'" :size="10" class="status-icon pending" />
-                    <Check v-else :size="10" class="status-icon sent" />
+                    <Loader2 v-if="msg.status === 'pending'" :size="10" class="status-icon pending spin-icon" />
+
+                    <template v-else>
+                      <Check :size="10" class="status-icon sent" />
+                    </template>
                   </div>
+
                 </div>
               </template>
             </div>
@@ -231,18 +235,8 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import { 
-  MessagesSquare, 
-  SendHorizontal, 
-  Loader2, 
-  ChevronUp, 
-  Trash2, 
-  ArrowLeft, 
-  Pencil, 
-  RefreshCcw,
-  Check,
-  Clock
-} from 'lucide-vue-next'
+import { ArrowLeft, SendHorizontal, Loader2, MessageSquare, RefreshCcw, Check, CheckCheck, ChevronUp, Trash2, Pencil, MessagesSquare } from 'lucide-vue-next'
+
 import AppToast from '@/components/common/AppToast.vue'
 import UserProfileModal from '@/components/chat/UserProfileModal.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'

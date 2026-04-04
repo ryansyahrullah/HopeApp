@@ -27,10 +27,20 @@ export function useMessageSync() {
       payload,
       content: payload.content, // Untuk mempermudah filter di UI
       recipientId: payload.recipientId, // Hanya untuk DM
-      authorName: payload.authorName,
+      
+      // Penting: Sertakan ID & Info Author agar UI (isOwnMessage) mengenali ini pesan milik kita
+      user_id: currentUser.value.id,
+      sender_id: currentUser.value.id,
+      author_name: payload.authorName,
+      author_avatar: payload.authorAvatar,
+      author_roles: payload.authorRoles,
+      author_number: payload.authorNumber,
+      author_is_anonymous: payload.isAnonymous,
+      
       created_at: new Date().toISOString(),
       status: 'pending'
     }
+
     
     pendingMessages.value.push(newMessage)
     saveToStorage()

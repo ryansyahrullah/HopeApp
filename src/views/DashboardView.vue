@@ -354,7 +354,7 @@
       </template>
 
       <!-- Notif Bantuan Loading -->
-      <AppToast message="Jika loading terus(all page), refresh aja" variant="warning" :duration="8000" />
+      <AppToast message="loading terus/stuck(all page), refresh aja" variant="warning" :duration="8000" />
   </div>
 </template>
 

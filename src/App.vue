@@ -24,7 +24,9 @@ import { useAuth } from './composables/useAuth'
 import { useDMBadge } from './composables/useDMBadge'
 import { useAvatarSync } from './composables/useAvatarSync'
 import { useMessageSync } from './composables/useMessageSync'
+import { useProfileSync } from './composables/useProfileSync'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
+
 
 import AppHeader from '@/components/layout/AppHeader.vue'
 
@@ -32,25 +34,45 @@ const { initAuth, currentUser } = useAuth()
 const { refreshUnreadCount } = useDMBadge()
 const { processQueue } = useAvatarSync()
 const { syncPending } = useMessageSync()
+const { syncPendingProfile } = useProfileSync()
 
 const route = useRoute()
 
 onMounted(async () => {
   await initAuth()
   
-  // Periksa antrean unggahan tertunda (Auto Sync)
+  // Sinkronisasi Latar Belakang (Awal Muat)
   processQueue()
-  
-  // Periksa antrean pesan tertunda (Message Sync)
   syncPending()
-  
-  // Listener untuk koneksi kembali online
+  syncPendingProfile()
+
+  // 1. Listener Online (Jika Internet kembali)
   window.addEventListener('online', () => {
-    console.log('[App] Koneksi kembali, memproses antrean...')
+    console.log('[App] Koneksi stabil, memproses antrean...')
     processQueue()
     syncPending()
+    syncPendingProfile()
+  })
+
+  // 2. AUTO-REFRESH (Paling penting: Saat user kembali ke App)
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible') {
+      console.log('[App] Aplikasi aktif kembali, menyegarkan data...')
+      
+      // Refresh Auth & Profile (Soft Hard-Refresh)
+      await initAuth() 
+      
+      // Sinkronisasi lagi
+      processQueue()
+      syncPending()
+      syncPendingProfile()
+      
+      // Refresh Lencana Chat (Inbox)
+      refreshUnreadCount()
+    }
   })
 })
+
 
 
 // Sembunyikan sidebar dan header jika di halaman standalone public/login

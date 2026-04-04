@@ -158,6 +158,18 @@ async function refreshProfile() {
   }
 }
 
+/**
+ * Optimistic: Update profile state in memory and localStorage immediately
+ * @param {Object} updates 
+ */
+function updateProfileLocal(updates) {
+  if (profile.value) {
+    profile.value = { ...profile.value, ...updates }
+    localStorage.setItem('hopeapp_profile', JSON.stringify(profile.value))
+  }
+}
+
+
 // Registration toggle check
 async function isRegistrationOpen() {
   const { data, error } = await supabase
@@ -231,6 +243,8 @@ export function useAuth() {
     updatePassword,
     updateEmail,
     refreshProfile,
+    updateProfileLocal,
     isRegistrationOpen
+
   }
 }

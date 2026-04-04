@@ -54,13 +54,15 @@
               <div class="msg-meta">
                 <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
                 <!-- Status Icons -->
-                <div v-if="isOwnMessage(msg)" class="msg-status">
-                  <Clock v-if="msg.status === 'pending'" :size="10" class="status-icon pending" />
-                  <template v-else>
-                     <CheckCheck v-if="msg.is_read" :size="10" class="status-icon read" />
-                     <Check v-else :size="10" class="status-icon sent" />
-                  </template>
-                </div>
+                  <div v-if="isOwnMessage(msg)" class="msg-status">
+                    <Loader2 v-if="msg.status === 'pending'" :size="10" class="status-icon pending spin-icon" />
+
+                    <template v-else>
+                       <CheckCheck v-if="msg.is_read" :size="10" class="status-icon read" />
+                       <Check v-else :size="10" class="status-icon sent" />
+                    </template>
+                  </div>
+
               </div>
             </div>
           </div>
@@ -100,7 +102,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, SendHorizontal, Loader2, MessageSquare, RefreshCcw, Clock, Check, CheckCheck } from 'lucide-vue-next'
+import { ArrowLeft, SendHorizontal, Loader2, MessageSquare, RefreshCcw, Check, CheckCheck } from 'lucide-vue-next'
+
 
 import { useAuth } from '@/composables/useAuth'
 import { dmService } from '@/services/dmService'
