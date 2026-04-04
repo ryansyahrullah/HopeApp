@@ -287,7 +287,7 @@ const formatMessage = (text) => {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px); /* Dikurangi tinggi Header Global (64px) */
+  height: 100%; /* Atau calc(100vh - 64px) jika header ada secara global */
   background-color: var(--c-bg);
   overflow: hidden;
 }
@@ -455,6 +455,7 @@ const formatMessage = (text) => {
   padding: 0.75rem 1rem;
   background-color: var(--c-surface);
   border-top: 1px solid var(--c-border);
+  flex-shrink: 0;
 }
 
 .input-wrapper {
