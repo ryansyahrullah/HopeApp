@@ -61,6 +61,11 @@
         <p class="card-desc">Masukkan password Anda saat ini dan email baru yang ingin digunakan.</p>
 
         <form @submit.prevent="saveEmail" class="app-form mt-4">
+          <div class="version-info">
+            <p>HopeApp - v1.17.1</p>
+            <p>&copy; 2026 POLIBAN - All rights reserved</p>
+          </div>
+
           <div class="form-group">
             <label>Password Saat Ini</label>
             <input type="password" placeholder="********" required />

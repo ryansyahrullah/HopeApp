@@ -724,20 +724,20 @@ const formatMessage = (text) => {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100vh - 64px); /* Dikurangi tinggi Header Global (64px) */
   background-color: var(--c-bg);
   overflow: hidden;
-  position: relative;
 }
 
-/* ========== HEADER ========== */
+/* Header Pinned di Atas */
 .chat-header {
+  height: 70px;
+  background-color: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.85rem 1.25rem;
-  background: var(--c-surface);
-  border-bottom: 1px solid var(--c-border);
+  padding: 0 1.25rem;
   flex-shrink: 0;
   z-index: 10;
 }
@@ -863,10 +863,10 @@ const formatMessage = (text) => {
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 1.25rem 1.5rem 0.75rem;
+  padding: 1.5rem 1.25rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 1.25rem;
   background-color: #f0ece6;
   min-height: 0; /* Crucial for inner scroll in flex container */
   

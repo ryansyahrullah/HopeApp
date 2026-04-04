@@ -11,7 +11,12 @@
         <div class="avatar flex-center zh" @click="showProfileMenu = !showProfileMenu">
           <img v-if="currentUser?.avatar_url" :src="currentUser.avatar_url" alt="User Avatar" class="header-avatar-img" />
           <span v-else>{{ userInitial }}</span>
+          
+          <!-- Badge Notifikasi Pesan Masuk (Gabungan Personal & Grup) -->
+          <div v-if="totalUnread > 0" class="red-dot-badge"></div>
         </div>
+
+
 
         
         <!-- Overlay for closing popup -->
@@ -84,12 +89,18 @@ import { User, LogOut, Settings, MessageSquare } from 'lucide-vue-next'
 
 import { useAuth } from '@/composables/useAuth'
 import { useDMBadge } from '@/composables/useDMBadge'
+import { useChatBadge } from '@/composables/useChatBadge'
+
 
 const router = useRouter()
 const { currentUser, roleLabel, roleName, setRole, signOut } = useAuth()
 const { dmUnreadCount } = useDMBadge()
+const { unreadCount: groupUnreadCount } = useChatBadge()
+
+const totalUnread = computed(() => (dmUnreadCount.value || 0) + (groupUnreadCount.value || 0))
 
 const showProfileMenu = ref(false)
+
 
 const userInitial = computed(() => {
   const name = currentUser.value?.full_name || ''

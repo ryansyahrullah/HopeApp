@@ -8,6 +8,8 @@
         <div class="header-avatar-circle">
            <img v-if="currentUser?.avatar_url" :src="currentUser.avatar_url" alt="Avatar" class="header-avatar-img" />
            <span v-else class="zh">{{ userInitial }}</span>
+           <!-- Red Dot Badge -->
+           <div v-if="totalUnread > 0" class="red-dot-badge-float"></div>
         </div>
         <div>
           <h2 class="page-title">Selamat datang, <span class="text-accent">{{ firstName }}</span> 希</h2>
@@ -109,8 +111,9 @@
             <router-link to="/chat" class="shortcut-item">
               <div class="shortcut-icon-wrapper">
                 <div class="shortcut-icon" style="background-color: #ecfdf5; color: #10b981;"><MessageCircle :size="24" stroke-width="2.5" /></div>
-                <span v-if="unreadCount > 0" class="shortcut-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+                <span v-if="totalUnread > 0" class="shortcut-badge">{{ totalUnread > 99 ? '99+' : totalUnread }}</span>
               </div>
+
               <span class="shortcut-label">Obrolan</span>
             </router-link>
           </template>
@@ -367,16 +370,21 @@ import {
 } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { useChatBadge } from '@/composables/useChatBadge'
+import { useDMBadge } from '@/composables/useDMBadge'
 import { dashboardService } from '@/services/dashboardService'
 import BaseButton from '@/components/common/BaseButton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import AppToast from '@/components/common/AppToast.vue'
-
 import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 
 
+
 const { roleName, isAdmin, isDosen, isMahasiswa, currentUser } = useAuth()
-const { unreadCount } = useChatBadge()
+const { unreadCount: groupUnreadCount } = useChatBadge()
+const { dmUnreadCount } = useDMBadge()
+
+const totalUnread = computed(() => (groupUnreadCount.value || 0) + (dmUnreadCount.value || 0))
+
 
 const firstName = computed(() => {
   if (!currentUser.value?.full_name) return 'Pengguna'
@@ -459,6 +467,20 @@ onMounted(() => {
   cursor: pointer;
   position: relative;
 }
+
+.red-dot-badge-float {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  background-color: var(--c-danger);
+  border-radius: 50%;
+  border: 2px solid var(--c-surface);
+  z-index: 5;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 
 .mobile-avatar-circle {
 

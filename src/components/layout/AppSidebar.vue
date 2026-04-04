@@ -62,8 +62,9 @@
         <router-link to="/chat" class="nav-item">
           <div class="icon-wrapper">
             <span class="icon"><MessageCircle :size="20" /></span>
-            <span v-if="unreadCount > 0" class="chat-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+            <span v-if="totalUnread > 0" class="chat-badge">{{ totalUnread > 99 ? '99+' : totalUnread }}</span>
           </div>
+
           <span class="nav-label">Obrolan</span>
         </router-link>
       </template>
@@ -91,9 +92,15 @@
 import { LayoutDashboard, CalendarDays, ClipboardCheck, FileText, User, UsersRound, GraduationCap, PieChart, Settings, MessageSquare, MessageCircle } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { useChatBadge } from '@/composables/useChatBadge'
+import { useDMBadge } from '@/composables/useDMBadge'
+import { computed } from 'vue'
 
 const { isAdmin, isDosen, isMahasiswa } = useAuth()
-const { unreadCount } = useChatBadge()
+const { unreadCount: groupUnreadCount } = useChatBadge()
+const { dmUnreadCount } = useDMBadge()
+
+const totalUnread = computed(() => (groupUnreadCount.value || 0) + (dmUnreadCount.value || 0))
+
 </script>
 
 <style scoped>
