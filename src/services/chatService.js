@@ -42,7 +42,7 @@ export const chatService = {
    * @param {string} content
    * @returns {Promise<Object>}
    */
-  async sendMessage(userId, content, authorName, authorNumber, authorRoles) {
+  async sendMessage(userId, content, authorName, authorNumber, authorRoles, authorAvatar, isAnonymous = false) {
     const { data, error } = await supabase
       .from('messages')
       .insert({ 
@@ -50,14 +50,18 @@ export const chatService = {
         content: content.trim(),
         author_name: authorName,
         author_number: authorNumber,
-        author_roles: authorRoles
+        author_roles: authorRoles,
+        author_avatar: authorAvatar,
+        author_is_anonymous: isAnonymous
       })
       .select('*')
       .single()
 
+
     if (error) throw error
     return data
   },
+
 
   /**
    * Mengedit pesan

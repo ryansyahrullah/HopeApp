@@ -49,6 +49,33 @@ export const profileService = {
     return data
   },
 
+  // Upload Avatar
+  async uploadAvatar(userId, file) {
+    // Get extension dari name (File) atau default ke jpg (untuk Blob dari kompresi)
+    const fileExt = file.name ? file.name.split('.').pop() : 'jpg'
+    const fileName = `${userId}/${Date.now()}.${fileExt}`
+    const filePath = `${fileName}`
+
+    // 1. Upload to storage
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, {
+        contentType: `image/${fileExt === 'webp' ? 'webp' : 'jpeg'}`,
+        upsert: true
+      })
+
+    if (uploadError) throw uploadError
+
+
+    // 2. Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath)
+
+    return publicUrl
+  },
+
+
   // Delete profile (admin only — cascades to auth.users)
   async deleteProfile(id) {
     const { error } = await supabase
@@ -83,5 +110,19 @@ export const profileService = {
 
     if (error) throw error
     return true
+  },
+
+  // Update anonymous status
+  async updateAnonymousStatus(id, isAnonymous) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ is_anonymous: isAnonymous })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
   }
 }
+

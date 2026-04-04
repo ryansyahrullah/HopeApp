@@ -4,10 +4,20 @@
          DESKTOP HEADER
          ============================================== -->
     <div class="dashboard-header desktop-only">
-      <div>
-        <h2 class="page-title">Selamat datang, <span class="text-accent">{{ firstName }}</span> 希</h2>
-        <p class="page-subtitle">Ringkasan aktivitas kelas HopeApp - POLIBAN</p>
+      <div style="display:flex; align-items:center; gap:1.25rem;">
+        <div class="header-avatar-circle">
+           <img v-if="currentUser?.avatar_url" :src="currentUser.avatar_url" alt="Avatar" class="header-avatar-img" />
+           <span v-else class="zh">{{ userInitial }}</span>
+        </div>
+        <div>
+          <h2 class="page-title">Selamat datang, <span class="text-accent">{{ firstName }}</span> 希</h2>
+          <p class="page-subtitle">Ringkasan aktivitas kelas HopeApp - POLIBAN</p>
+        </div>
       </div>
+
+
+
+
       
       <!-- Tombol Aksi Cepat (Admin Only) -->
       <div v-if="isAdmin" class="quick-actions">
@@ -28,15 +38,23 @@
          MOBILE TOP WALLET HEADER
          ============================================== -->
     <div class="mobile-dashboard-header mobile-only">
-       <div class="mobile-top-content">
-          <p style="opacity: 0.9; font-size: 0.9rem; margin-bottom: 0.2rem;">你好 (nǐ hǎo), {{ firstName }}! ✨</p>
-          <h2 style="font-size: 1.3rem; font-weight: 700; color: white;">HopeApp POLIBAN</h2>
+       <div class="mobile-top-content" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <p style="opacity: 0.9; font-size: 0.9rem; margin-bottom: 0.2rem;">你好 (nǐ hǎo), {{ firstName }}! ✨</p>
+            <h2 style="font-size: 1.3rem; font-weight: 700; color: white;">HopeApp POLIBAN</h2>
+          </div>
        </div>
        <div class="mobile-bg-extender"></div>
     </div>
 
+
+
+
+
     <!-- ==============================================
          APP SHORTCUTS MENU (Selalu Muncul Instan)
+
+
          ============================================== -->
     <div class="app-shortcuts-section animate-fade-in" style="animation-delay: 0.05s">
         <h3 class="section-title">Akses Cepat</h3>
@@ -102,6 +120,8 @@
       <!-- ==============================================
            SKELETON LOADING (Muncul saat data belum siap)
            ============================================== -->
+
+
       <template v-if="isLoading">
         <!-- Desktop Skeleton -->
         <div class="bento-grid desktop-only">
@@ -332,19 +352,28 @@
         </div>
       </div>
       </template>
+
+      <!-- Notif Bantuan Loading -->
+      <AppToast message="Jika loading terus(all page), refresh aja" variant="warning" :duration="8000" />
   </div>
 </template>
 
+
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Plus, CheckCircle, Users, CalendarDays, Sparkles, BookOpen, Trophy, BookX, ClipboardCheck, Rocket, PieChart, UsersRound, GraduationCap, MessageSquare, MessageCircle } from 'lucide-vue-next'
+import { 
+  CalendarDays, BookOpen, GraduationCap, ClipboardCheck, 
+  PieChart, UsersRound, MessageSquare, Plus, MessageCircle, CheckCircle, Users, Sparkles, Trophy, BookX, Rocket
+} from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { useChatBadge } from '@/composables/useChatBadge'
 import { dashboardService } from '@/services/dashboardService'
 import BaseButton from '@/components/common/BaseButton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import AppToast from '@/components/common/AppToast.vue'
 
 import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
+
 
 const { roleName, isAdmin, isDosen, isMahasiswa, currentUser } = useAuth()
 const { unreadCount } = useChatBadge()
@@ -353,6 +382,13 @@ const firstName = computed(() => {
   if (!currentUser.value?.full_name) return 'Pengguna'
   return currentUser.value.full_name.split(' ')[0]
 })
+
+const userInitial = computed(() => {
+  return (currentUser.value?.full_name || '?').charAt(0).toUpperCase()
+})
+
+
+
 
 const isLoading = ref(true)
 const adminStats = ref({ avgAttendance: 0, totalStudents: 0, totalMeetings: 0 })
@@ -406,6 +442,52 @@ onMounted(() => {
 .page-subtitle {
   color: var(--c-text-muted);
 }
+
+.header-avatar-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--c-primary), var(--c-danger));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  overflow: visible; /* Penting untuk tombol melayang */
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.2);
+  cursor: pointer;
+  position: relative;
+}
+
+.mobile-avatar-circle {
+
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+  overflow: visible;
+  position: relative;
+  cursor: pointer;
+}
+
+.header-avatar-img {
+
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+
 
 /* =========================================
    APP SHORTCUTS (WALLET STYLE)

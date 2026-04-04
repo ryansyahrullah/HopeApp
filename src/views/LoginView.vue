@@ -80,7 +80,8 @@
         </button>
 
         <!-- Versi Aplikasi -->
-        <p class="app-version">Versi 1.12.6</p>
+        <p class="app-version">Versi 1.15.4</p>
+
       </div>
 
       <!-- MODE 1: LUPA SANDI - INPUT EMAIL -->
@@ -116,7 +117,11 @@
 
     <!-- Turnstile invisible widget (Moved outside dynamic container to prevent VDOM wipe) -->
     <div ref="turnstileContainerRef" key="turnstile-app-widget" class="turnstile-container"></div>
+    
+    <!-- Notif Bantuan Loading -->
+    <AppToast message="Jika loading terus, refresh aja" variant="warning" :duration="8000" />
   </div>
+
 </template>
 
 <script setup>
@@ -125,6 +130,8 @@ import { useRouter } from 'vue-router'
 import { ChevronLeft, AlertCircle, CheckCircle } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { useTurnstile } from '@/composables/useTurnstile'
+import AppToast from '@/components/common/AppToast.vue'
+
 
 const router = useRouter()
 const { signInWithEmail: authSignIn, signInWithGoogle: authGoogleSignIn, resetPassword } = useAuth()
@@ -253,7 +260,9 @@ const sendResetLink = async () => {
   text-shadow: 0 10px 40px rgba(0,0,0,0.8);
   background: linear-gradient(to bottom, #ffffff, #fca5a5);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+
 }
 
 .banner-content p {
@@ -321,7 +330,9 @@ const sendResetLink = async () => {
   margin-bottom: 0.25rem;
   background: linear-gradient(135deg, var(--c-primary), #ff6b6b);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+
   display: inline-block;
   font-weight: 800;
 }

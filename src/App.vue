@@ -29,7 +29,15 @@ const route = useRoute()
 const isAuthRoute = computed(() => ['/login', '/complete-profile', '/reset-password', '/masukan'].includes(route.path))
 
 // Halaman fullscreen (tanpa sidebar/header, tapi bukan auth)
-const isFullscreenRoute = computed(() => ['/chat', '/cici-chat'].includes(route.path))
+const isFullscreenRoute = computed(() => {
+  return [
+    '/chat', 
+    '/cici-chat', 
+    '/chat/inbox', 
+  ].some(path => route.path === path) || 
+  route.path.startsWith('/chat/private/')
+})
+
 
 </script>
 

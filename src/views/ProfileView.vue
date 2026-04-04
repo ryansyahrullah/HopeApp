@@ -3,12 +3,29 @@
 
     <!-- Profile Header -->
     <div class="profile-hero animate-fade-in">
-      <div class="profile-avatar-wrapper">
+      <div class="profile-avatar-wrapper" @click="triggerFileInput" :class="{ 'loading': isUploading }">
         <div class="profile-avatar flex-center zh">
-          <span>{{ userInitial }}</span>
+          <img v-if="currentUser.avatar_url" :src="currentUser.avatar_url" alt="Avatar" class="avatar-img" />
+          <span v-else>{{ userInitial }}</span>
+          
+          <!-- Hover Overlay -->
+          <div class="avatar-overlay">
+            <Loader2 v-if="isUploading" class="spin-icon" :size="24" />
+            <Camera v-else :size="24" />
+          </div>
         </div>
         <div class="role-ribbon">{{ roleLabel }}</div>
+        
+        <!-- Hidden File Input -->
+        <input 
+          type="file" 
+          ref="fileInput" 
+          style="display: none" 
+          accept="image/*"
+          @change="handleAvatarUpload"
+        />
       </div>
+
       <div class="profile-identity">
         <h1 class="profile-name">{{ currentUser.full_name }}</h1>
         <p class="profile-role">{{ roleLabel }}</p>
@@ -16,7 +33,35 @@
           <button class="edit-profile-btn" @click="openEditModal" title="Edit Profil">
             <Edit2 :size="14" /> Edit Profil
           </button>
+          <button class="anon-btn" @click="showAnonPopup = true" :class="{ 'is-anon': currentUser.is_anonymous }">
+            <Lock v-if="currentUser.is_anonymous" :size="14" />
+            <UserIcon v-else :size="14" />
+            Anonim
+          </button>
         </div>
+
+        <!-- ANONIM EXPLANATION POPUP -->
+        <Teleport to="body">
+          <div v-if="showAnonPopup" class="modal-overlay" @click.self="showAnonPopup = false">
+            <div class="modal-card anon-card animate-zoom-in">
+              <div class="modal-header">
+                <h3>Mode Anonim</h3>
+                <div class="toggle-switch" :class="{ 'on': currentUser.is_anonymous }" @click="toggleAnonStatus">
+                  <div class="switch-handle"></div>
+                </div>
+              </div>
+              <div class="modal-body">
+                <p class="anon-desc">
+                  Identitas Anda akan disembunyikan di grup chat (muncul sebagai "Pengguna Anonim") dan data pribadi Anda (NIM, Prodi, dkk) akan disensor dari mahasiswa lain. Admin & Dosen tetap dapat melihat data asli Anda untuk keperluan akademik.
+                </p>
+                <div class="modal-footer">
+                  <button class="submit-btn" @click="showAnonPopup = false" style="width: 100%; justify-content: center;">Tutup</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Teleport>
+
       </div>
     </div>
 
@@ -148,7 +193,9 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, reactive } from 'vue'
-import { BookOpen, BarChart, Settings, Lock, Edit2 } from 'lucide-vue-next'
+import { BookOpen, BarChart, Settings, Lock, Edit2, Camera, Loader2, User as UserIcon } from 'lucide-vue-next'
+
+
 import { useAuth } from '@/composables/useAuth'
 import { meetingService } from '@/services/meetingService'
 import { presensiService } from '@/services/presensiService'
@@ -223,6 +270,60 @@ const saveEditProfile = async () => {
     isSaving.value = false
   }
 }
+
+// Avatar Upload
+const fileInput = ref(null)
+
+const isUploading = ref(false)
+
+const triggerFileInput = () => {
+  if (!isUploading.value) fileInput.value?.click()
+}
+
+const handleAvatarUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // Validate size (2MB)
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Ukuran file maksimal adalah 2MB')
+    return
+  }
+
+  isUploading.value = true
+  try {
+    const publicUrl = await profileService.uploadAvatar(currentUser.value.id, file)
+    
+    // Update profile in DB
+    await profileService.updateProfile(currentUser.value.id, { avatar_url: publicUrl })
+    
+    // Refresh global state
+    await refreshProfile()
+    
+    alert('Foto profil berhasil diperbarui!')
+  } catch (error) {
+    console.error('Upload failed:', error)
+    alert('Gagal mengunggah foto: ' + error.message)
+  } finally {
+    isUploading.value = false
+    // Clear input
+    if (fileInput.value) fileInput.value.value = ''
+  }
+}
+
+// Fitur Anonim
+const showAnonPopup = ref(false)
+const toggleAnonStatus = async () => {
+  const newStatus = !currentUser.value.is_anonymous
+  try {
+    await profileService.updateAnonymousStatus(currentUser.value.id, newStatus)
+    await refreshProfile()
+  } catch (e) {
+    alert('Gagal mengubah status anonim.')
+  }
+}
+
+
 
 // Stats
 const stats = ref({
@@ -304,7 +405,46 @@ onMounted(() => loadStats())
   font-weight: bold;
   font-size: 2.5rem;
   box-shadow: 0 6px 20px rgba(198, 40, 40, 0.25);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
 }
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: white;
+}
+
+.profile-avatar-wrapper:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.profile-avatar-wrapper.loading .avatar-overlay {
+  opacity: 1;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 
 .role-ribbon {
   position: absolute;
@@ -361,6 +501,74 @@ onMounted(() => loadStats())
   border-color: var(--c-primary);
   transform: translateY(-1px);
 }
+
+.anon-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: var(--c-surface);
+  color: var(--c-text-muted);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.anon-btn.is-anon {
+  color: var(--c-success);
+  border-color: var(--c-success);
+  background: rgba(22, 163, 74, 0.05);
+}
+
+.anon-btn:hover {
+  transform: translateY(-1px);
+  border-color: currentColor;
+}
+
+/* Anonim Switch & Card */
+.anon-card {
+  max-width: 400px;
+}
+
+.anon-desc {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--c-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.toggle-switch {
+  width: 44px;
+  height: 24px;
+  background-color: #e2e8f0;
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-switch.on {
+  background-color: var(--c-success);
+}
+
+.switch-handle {
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.toggle-switch.on .switch-handle {
+  left: calc(100% - 21px);
+}
+
 
 /* Modal */
 .modal-overlay {

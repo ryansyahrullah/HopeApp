@@ -9,8 +9,10 @@
     <div class="header-right">
       <div class="user-profile-wrapper">
         <div class="avatar flex-center zh" @click="showProfileMenu = !showProfileMenu">
-          <span>{{ userInitial }}</span>
+          <img v-if="currentUser?.avatar_url" :src="currentUser.avatar_url" alt="User Avatar" class="header-avatar-img" />
+          <span v-else>{{ userInitial }}</span>
         </div>
+
         
         <!-- Overlay for closing popup -->
         <div v-if="showProfileMenu" class="popup-overlay" @click="showProfileMenu = false"></div>
@@ -19,7 +21,10 @@
         <div v-if="showProfileMenu" class="profile-popup animate-fade-in">
            <div class="popup-header">
               <div class="popup-user-info">
-                 <div class="mini-avatar">{{ userInitial }}</div>
+                 <div class="mini-avatar">
+                    <img v-if="currentUser?.avatar_url" :src="currentUser.avatar_url" alt="Mini Avatar" class="header-avatar-img" />
+                    <span v-else>{{ userInitial }}</span>
+                 </div>
                  <div class="user-details">
                     <strong class="user-name">{{ currentUser?.full_name || 'User' }}</strong>
                     <span class="role-badge">{{ roleLabel }}</span>
@@ -42,9 +47,19 @@
                 <div class="popup-divider"></div>
               </template>
 
+              <router-link v-if="currentUser?.roles?.includes('mahasiswa') || currentUser?.roles?.includes('admin')" to="/chat/inbox" class="popup-item" @click="showProfileMenu = false">
+                 <MessageSquare :size="16" /> 
+                 <span>Pesan</span>
+                 <div v-if="dmUnreadCount > 0" class="inline-red-dot"></div>
+              </router-link>
+
+
+
+
               <router-link to="/profile" class="popup-item" @click="showProfileMenu = false">
                  <User :size="16" /> Edit Profile
               </router-link>
+
 
               <router-link to="/settings" class="popup-item" @click="showProfileMenu = false">
                  <Settings :size="16" /> Pengaturan
@@ -65,11 +80,14 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, LogOut, Settings } from 'lucide-vue-next'
+import { User, LogOut, Settings, MessageSquare } from 'lucide-vue-next'
+
 import { useAuth } from '@/composables/useAuth'
+import { useDMBadge } from '@/composables/useDMBadge'
 
 const router = useRouter()
 const { currentUser, roleLabel, roleName, setRole, signOut } = useAuth()
+const { dmUnreadCount } = useDMBadge()
 
 const showProfileMenu = ref(false)
 
@@ -150,11 +168,31 @@ const handleLogout = async () => {
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
+  position: relative;
 }
 
 .avatar:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(198, 40, 40, 0.5);
+}
+
+.header-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.red-dot-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background-color: var(--c-danger);
+  border-radius: 50%;
+  border: 2px solid var(--c-surface);
+  z-index: 5;
 }
 
 /* POPUP MENU STYLES */
@@ -288,4 +326,20 @@ const handleLogout = async () => {
   background-color: var(--c-border);
   margin: 0.5rem 0;
 }
+
+.popup-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.inline-red-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--c-danger);
+  border-radius: 50%;
+  margin-left: auto;
+}
+
 </style>

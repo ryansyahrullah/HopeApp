@@ -53,21 +53,44 @@
             <span>{{ formatDateLabel(msg.created_at) }}</span>
           </div>
 
-          <div 
-            class="message-row" 
-            :class="{ 'own': isOwnMessage(msg), 'ai-row': isAiMessage(msg) }"
-            @contextmenu.prevent="isOwnMessage(msg) ? showContextMenu($event, msg) : null"
-            @touchstart="isOwnMessage(msg) ? onTouchStart($event, msg) : null"
-            @touchend="onTouchEnd"
-            @touchmove="onTouchEnd"
-          >
-            <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg), 'ai-bubble': isAiMessage(msg), 'editing-bubble': editingMessageId === msg.id }">
-              <!-- Sender name (hanya untuk pesan orang lain) -->
-              <span v-if="!isOwnMessage(msg)" class="sender-name" :style="{ color: isAiMessage(msg) ? '#db2777' : getSenderColor(msg.author_roles), display: isAiMessage(msg) ? 'flex' : 'block', alignItems: 'center', gap: '4px' }">
-                <img v-if="isAiMessage(msg)" src="/cici_avatar.png" alt="Cici" class="cici-avatar-small" />
-                {{ msg.author_name || 'Unknown' }}
-                <span v-if="msg.author_number && !isAiMessage(msg)" class="sender-badge">{{ msg.author_number }}</span>
-              </span>
+            <div 
+              class="message-row" 
+              :class="{ 'own': isOwnMessage(msg), 'ai-row': isAiMessage(msg) }"
+              @contextmenu.prevent="isOwnMessage(msg) ? showContextMenu($event, msg) : null"
+              @touchstart="isOwnMessage(msg) ? onTouchStart($event, msg) : null"
+              @touchend="onTouchEnd"
+              @touchmove="onTouchEnd"
+            >
+              <!-- Avatar Column -->
+              <div v-if="!isOwnMessage(msg)" class="message-avatar-col" @click="!isAnonymousMsg(msg) || canSeeIdentity(msg) ? openProfileModal(msg.user_id) : null">
+                <img v-if="isAiMessage(msg)" src="/cici_avatar.png" alt="Cici avatar" class="msg-avatar-img clickable" />
+                
+                <!-- Masking Avatar if Anonymous -->
+                <template v-else-if="isAnonymousMsg(msg) && !canSeeIdentity(msg)">
+                   <div class="msg-avatar-placeholder zh" style="background-color: #94a3b8;">?</div>
+                </template>
+
+                <img v-else-if="msg.author_avatar" :src="msg.author_avatar" alt="User avatar" class="msg-avatar-img clickable" />
+                <div v-else class="msg-avatar-placeholder clickable" :style="{ backgroundColor: getAvatarColor(msg.author_name) }">
+                  {{ getInitial(msg.author_name) }}
+                </div>
+              </div>
+
+
+
+              <div class="message-bubble" :class="{ 'own-bubble': isOwnMessage(msg), 'ai-bubble': isAiMessage(msg), 'editing-bubble': editingMessageId === msg.id }">
+                <!-- Sender name (hanya untuk pesan orang lain) -->
+                <span v-if="!isOwnMessage(msg)" class="sender-name" :style="{ color: isAiMessage(msg) ? '#db2777' : getSenderColor(msg.author_roles), display: 'flex', alignItems: 'center', gap: '4px' }">
+                  <template v-if="isAiMessage(msg)">Cici 希</template>
+                  <template v-else-if="isAnonymousMsg(msg)">
+                     {{ canSeeIdentity(msg) ? msg.author_name + ' (Anonim)' : 'Pengguna Anonim' }}
+                  </template>
+                  <template v-else>{{ msg.author_name || 'Unknown' }}</template>
+
+                  <span v-if="msg.author_number && !isAiMessage(msg) && (!isAnonymousMsg(msg) || canSeeIdentity(msg))" class="sender-badge">{{ msg.author_number }}</span>
+                </span>
+
+
               
               <!-- Edit Mode -->
               <template v-if="editingMessageId === msg.id">
@@ -190,12 +213,21 @@
       @confirm="executeDeleteMessage"
       @cancel="showDeleteDialog = false"
     />
+
+    <!-- User Profile Modal -->
+    <UserProfileModal 
+      :is-open="showProfileModal" 
+      :user-id="selectedUserId" 
+      @close="closeProfileModal" 
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { MessagesSquare, SendHorizontal, Loader2, ChevronUp, Trash2, ArrowLeft, Pencil, RefreshCcw } from 'lucide-vue-next'
+import AppToast from '@/components/common/AppToast.vue'
+import UserProfileModal from '@/components/chat/UserProfileModal.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { chatService } from '@/services/chatService'
@@ -230,6 +262,17 @@ onMounted(async () => {
   subscribeToRealtime()
   scrollToBottom()
 })
+
+const isAnonymousMsg = (msg) => {
+  return msg.author_is_anonymous === true
+}
+
+const canSeeIdentity = (msg) => {
+  if (isOwnMessage(msg)) return true
+  const role = currentUser.value?.roles || []
+  if (role.includes('admin') || role.includes('dosen')) return true
+  return false
+}
 
 onUnmounted(() => {
   resetBadge()
@@ -321,25 +364,25 @@ const subscribeToRealtime = () => {
 // ============ SENDING ============
 
 const sendMessage = async () => {
-  const content = newMessage.value.trim()
-  if (!content || isSending.value) return
-  
-  const userId = currentUser.value?.id
-  if (!userId) return
-  
+  if (!newMessage.value.trim() || isSending.value) return
   isSending.value = true
-  newMessage.value = ''
-  showMentionMenu.value = false
-  resetTextareaHeight()
+  const content = newMessage.value
 
   try {
     const sent = await chatService.sendMessage(
-      userId, 
+      currentUser.value.id,
       content,
-      currentUser.value?.full_name || 'Unknown',
-      currentUser.value?.student_number || null,
-      currentUser.value?.roles || ['mahasiswa']
+      currentUser.value.full_name,
+      currentUser.value.student_number || '?',
+      currentUser.value.roles,
+      currentUser.value.avatar_url,
+      currentUser.value.is_anonymous || false
     )
+    
+    newMessage.value = ''
+    showMentionMenu.value = false
+    resetTextareaHeight()
+
     // Tambahkan langsung ke lokal (optimistic)
     if (!messages.value.some(m => m.id === sent.id)) {
       messages.value.push(sent)
@@ -455,6 +498,22 @@ const onTouchEnd = () => {
     longPressTimer = null
   }
 }
+
+// Profile Modal Logic
+const showProfileModal = ref(false)
+const selectedUserId = ref('')
+
+const openProfileModal = (userId) => {
+  if (!userId || userId === '00000000-0000-0000-0000-00000000c1c1') return // Abaikan Cici untuk sekarang
+  selectedUserId.value = userId
+  showProfileModal.value = true
+}
+
+const closeProfileModal = () => {
+  showProfileModal.value = false
+  selectedUserId.value = ''
+}
+
 
 const promptDeleteFromMenu = () => {
   const id = contextMenu.message?.id
@@ -759,6 +818,46 @@ const formatMessage = (text) => {
   font-size: 0.75rem;
   color: var(--c-text-muted);
 }
+
+/* ========== MESSAGE AVATARS ========== */
+.message-avatar-col {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: flex-end;
+}
+
+.msg-avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--c-border);
+}
+
+.clickable {
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.clickable:active {
+  transform: scale(0.9);
+}
+
+
+.msg-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
 
 /* ========== MESSAGES CONTAINER ========== */
 .chat-messages {

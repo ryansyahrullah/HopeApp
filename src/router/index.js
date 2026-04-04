@@ -41,10 +41,21 @@ const routes = [
     meta: { roles: ['mahasiswa'] }
   },
   {
+    path: '/chat/inbox',
+    name: 'Inbox',
+    component: () => import('../views/InboxView.vue')
+  },
+  {
+    path: '/chat/private/:id',
+    name: 'PrivateChat',
+    component: () => import('../views/PrivateChatView.vue')
+  },
+  {
     path: '/cici-chat',
     name: 'CiciChat',
     component: () => import('../views/CiciChatView.vue')
   },
+
   {
     path: '/resumes',
     name: 'Resumes',
