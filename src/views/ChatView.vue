@@ -389,6 +389,10 @@ const sendMessage = async () => {
   const text = newMessage.value.trim()
   if (!text) return
   
+  // Deteksi mention @Cici
+  const isMentioningCici = /@cici/i.test(text)
+  const questionForCici = text.replace(/@cici/gi, '').trim()
+
   newMessage.value = ''
   resetTextareaHeight()
 
@@ -404,6 +408,14 @@ const sendMessage = async () => {
   
   await nextTick()
   scrollToBottom()
+
+  // Trigger AI Assistant jika dimention
+  if (isMentioningCici) {
+    // Jeda sedikit agar pesan user muncul lebih dulu
+    setTimeout(() => {
+      triggerAiAssistant(questionForCici || text, currentUser.value.id)
+    }, 600)
+  }
 }
 
 const triggerAiAssistant = async (question, userId) => {
