@@ -4,14 +4,16 @@
     <AppSidebar v-if="!isAuthRoute && !isFullscreenRoute" />
     
     <!-- Konten Kanan -->
-    <div class="main-wrapper">
-      <AppHeader v-if="!isAuthRoute && !isFullscreenRoute" />
-      
-      <main class="main-content" :class="{ 'auth-content': isAuthRoute, 'fullscreen-content': isFullscreenRoute }">
-        <router-view v-slot="{ Component }">
-          <component :is="Component" />
-        </router-view>
-      </main>
+      <div class="main-wrapper">
+        <AppHeader v-if="!isAuthRoute && !isFullscreenRoute" />
+        
+        <main class="main-content" :class="{ 'auth-content': isAuthRoute, 'fullscreen-content': isFullscreenRoute }">
+          <PullToRefresh :disabled="isAuthRoute">
+            <router-view v-slot="{ Component }">
+              <component :is="Component" />
+            </router-view>
+          </PullToRefresh>
+        </main>
 
       <!-- Global Notification Overlay -->
       <AppToast is-global />
@@ -31,6 +33,7 @@ import { useProfileSync } from './composables/useProfileSync'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppToast from '@/components/common/AppToast.vue'
+import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import { useToast } from './composables/useToast'
 
 const { initAuth, currentUser } = useAuth()
@@ -128,10 +131,10 @@ const isFullscreenRoute = computed(() => {
 <style scoped>
 .app-layout {
   display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background-color: var(--c-bg);
-  /* Hilangkan overflow hidden agar body/root bisa scroll untuk pull-to-refresh */
 }
 
 @media (max-width: 768px) {
@@ -145,22 +148,15 @@ const isFullscreenRoute = computed(() => {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
-  padding: 2rem;
-  /* Biarkan konten mengalir alami ke body luar */
-  overflow-y: visible; 
-  
-  /* Hide scrollbar on the content itself since root handles it */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.main-content::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  overflow: hidden; /* Kontrol scroll pindah ke PullToRefresh */
+  position: relative;
+  padding: 0; /* Padding dipindah ke dalam view masing-masing atau diatur di PTR */
 }
 
 .auth-content {
