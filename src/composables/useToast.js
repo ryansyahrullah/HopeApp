@@ -41,10 +41,10 @@ export function useToast() {
 
   let watchdogTimer = null
 
-  const startWatchdog = (msg = 'memuat terlalu lama, harap refresh!', delay = 5000, options = {}) => {
+  const startWatchdog = (msg = 'memuat terlalu lama, harap refresh!', delay = 7000, options = {}) => {
     if (watchdogTimer) clearTimeout(watchdogTimer)
     watchdogTimer = setTimeout(() => {
-      show(msg, { ...options, variant: 'warning', duration: 5000 })
+      show(msg, { ...options, variant: 'warning', duration: 7000 })
     }, delay)
   }
 
