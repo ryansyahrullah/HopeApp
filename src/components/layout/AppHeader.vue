@@ -97,7 +97,7 @@ const { currentUser, roleLabel, roleName, setRole, signOut } = useAuth()
 const { dmUnreadCount } = useDMBadge()
 const { unreadCount: groupUnreadCount } = useChatBadge()
 
-const totalUnread = computed(() => (dmUnreadCount.value || 0) + (groupUnreadCount.value || 0))
+const totalUnread = computed(() => dmUnreadCount.value || 0)
 
 const showProfileMenu = ref(false)
 

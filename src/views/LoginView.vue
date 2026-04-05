@@ -121,7 +121,7 @@
     <div ref="turnstileContainerRef" key="turnstile-app-widget" class="turnstile-container"></div>
     
     <!-- Notif Bantuan Loading -->
-    <AppToast message="Jika loading terus, refresh aja" variant="warning" :duration="8000" />
+    <AppToast message="Jika loading terus, refresh aja" variant="warning" :duration="8000" position="top" />
   </div>
 
 </template>

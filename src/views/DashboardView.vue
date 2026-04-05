@@ -9,7 +9,7 @@
            <img v-if="currentUser?.avatar_url" :src="currentUser.avatar_url" alt="Avatar" class="header-avatar-img" />
            <span v-else class="zh">{{ userInitial }}</span>
            <!-- Red Dot Badge -->
-           <div v-if="totalUnread > 0" class="red-dot-badge-float"></div>
+           <div v-if="dmUnreadCount > 0" class="red-dot-badge-float"></div>
         </div>
         <div>
           <h2 class="page-title">Selamat datang, <span class="text-accent">{{ firstName }}</span> 希</h2>

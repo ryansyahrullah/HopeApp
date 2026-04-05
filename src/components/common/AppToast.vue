@@ -1,6 +1,6 @@
 <template>
   <Transition name="toast-fade">
-    <div v-if="visible" class="app-toast-wrapper" @click="visible = false">
+    <div v-if="visible" class="app-toast-wrapper" :class="{ 'is-top': position === 'top' }" @click="visible = false">
       <div class="app-toast" :class="variant">
         <div class="toast-icon">
           <Info v-if="variant === 'info'" :size="18" />
@@ -21,7 +21,8 @@ import { Info, AlertCircle } from 'lucide-vue-next'
 const props = defineProps({
   message: { type: String, required: true },
   duration: { type: Number, default: 6000 },
-  variant: { type: String, default: 'info' } // 'info', 'warning'
+  variant: { type: String, default: 'info' }, // 'info', 'warning'
+  position: { type: String, default: 'bottom' } // 'top', 'bottom' (on mobile)
 })
 
 const visible = ref(false)
@@ -117,6 +118,11 @@ onMounted(() => {
   .app-toast-wrapper {
     top: auto;
     bottom: 5rem; /* Muncul di atas bottom nav mobile */
+  }
+
+  .app-toast-wrapper.is-top {
+    top: 1.5rem;
+    bottom: auto;
   }
 }
 </style>
