@@ -128,10 +128,10 @@ const isFullscreenRoute = computed(() => {
 <style scoped>
 .app-layout {
   display: flex;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--c-bg);
+  /* Hilangkan overflow hidden agar body/root bisa scroll untuk pull-to-refresh */
 }
 
 @media (max-width: 768px) {
@@ -144,19 +144,19 @@ const isFullscreenRoute = computed(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* Mencegah flex item membesar melewati layar */
-  height: 100%;
-  overflow: hidden;
+  min-width: 0;
+  min-height: 100dvh;
 }
 
 .main-content {
   flex: 1;
   padding: 2rem;
-  overflow-y: auto;
+  /* Biarkan konten mengalir alami ke body luar */
+  overflow-y: visible; 
   
-  /* Hide scrollbar to prevent layout shifts */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  /* Hide scrollbar on the content itself since root handles it */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .main-content::-webkit-scrollbar {
@@ -174,7 +174,8 @@ const isFullscreenRoute = computed(() => {
   padding: 0 !important;
   display: flex;
   flex-direction: column;
-  overflow: hidden !important;
+  overflow-y: auto !important; /* Ubah dari hidden agar bisa pull-to-refresh */
+  overscroll-behavior-y: auto;
   flex: 1;
   height: 100%;
   min-height: 0;

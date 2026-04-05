@@ -102,7 +102,9 @@ html, body {
   height: 100dvh;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto; /* Izinkan scroll vertical di tingkat root untuk Pull-to-Refresh */
+  overscroll-behavior-y: auto; /* Pastikan fitur native browser aktif */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
