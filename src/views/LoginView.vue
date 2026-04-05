@@ -25,7 +25,7 @@
           </div>
 
           <h1 class="brand-logo">HopeApp 希</h1>
-          <p class="brand-subtitle">Bahasa Mandarin POLIBAN</p>
+          <p class="brand-subtitle">Kelas Bahasa Mandarin</p>
         </div>
 
         <form class="auth-form" @submit.prevent="loginWithEmail">
