@@ -78,8 +78,6 @@
           <button type="submit" class="save-btn primary-btn" :disabled="isSavingEmail">
             {{ isSavingEmail ? 'Menyimpan...' : 'Simpan Perubahan' }}
           </button>
-          
-          <div v-if="emailMsg" class="alert-msg success">{{ emailMsg }}</div>
         </form>
       </div>
     </div>
@@ -123,8 +121,6 @@
           <button type="submit" class="save-btn primary-btn" :disabled="isSaving">
              {{ isSaving ? 'Memproses...' : 'Simpan Sandi' }}
           </button>
-          
-          <div v-if="message" :class="['alert-msg', messageType]">{{ message }}</div>
         </form>
       </div>
     </div>
@@ -136,8 +132,10 @@
 import { ref, watch, onMounted } from 'vue'
 import { Mail, LockKeyhole, ShieldCheck, PencilLine, ChevronRight, ChevronLeft } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
+import { useToast } from '@/composables/useToast'
 
 const { currentUser, session, updateEmail: authUpdateEmail, updatePassword: authUpdatePassword, signInWithEmail } = useAuth()
+const { success: toastSuccess, error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const activeMenu = ref(null)
 
@@ -168,47 +166,42 @@ const confirmPassword = ref('')
 const newEmail = ref('')
 
 const isSavingEmail = ref(false)
-const emailMsg = ref('')
 
 const isSaving = ref(false)
-const message = ref('')
-const messageType = ref('')
 
 const saveEmail = async () => {
   if (!newEmail.value) return;
   isSavingEmail.value = true;
-  emailMsg.value = '';
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     await authUpdateEmail(newEmail.value);
-    emailMsg.value = 'Permintaan penggantian email berhasil dikirim. Silakan cek masuk (inbox) di email baru dan lama Anda untuk konfirmasi.';
-    setTimeout(() => { emailMsg.value = ''; newEmail.value = ''; }, 6000);
+    toastSuccess('Permintaan ganti email terkirim! Cek inbox email baru & lama.');
+    newEmail.value = '';
+    activeMenu.value = null;
   } catch (error) {
-    emailMsg.value = 'Gagal mengganti email: ' + error.message;
+    toastError('Gagal mengganti email: ' + error.message);
   } finally {
     isSavingEmail.value = false;
+    stopWatchdog()
   }
 }
 
 const updatePassword = async () => {
-  message.value = '';
-  
   // Validasi Panjang Sandi
   if (newPassword.value.length < 6) {
-    messageType.value = 'error';
-    message.value = 'Sandi baru harus minimal 6 karakter.';
+    toastWarning('Sandi baru harus minimal 6 karakter.');
     return;
   }
 
   // Validasi Kecocokan
   if (newPassword.value !== confirmPassword.value) {
-    messageType.value = 'error';
-    message.value = 'Sandi baru dan Konfirmasi wajib sama.';
+    toastWarning('Sandi baru dan konfirmasi tidak cocok.');
     return;
   }
   
   isSaving.value = true;
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
-    // Jika user sudah punya password, pastikan password lama benar dengan cara relogin diam-diam
     if (hasPassword.value) {
       if (!oldPassword.value) {
         throw new Error('Masukkan password saat ini.');
@@ -220,24 +213,20 @@ const updatePassword = async () => {
       }
     }
 
-    // Update password di Auth
     await authUpdatePassword(newPassword.value);
     
-    messageType.value = 'success';
-    message.value = hasPassword.value ? 'Kata sandi berhasil diperbarui!' : 'Kata sandi berhasil dibuat!';
-    
-    // Setel state hasPassword jadi true untuk ke depannya
+    toastSuccess(hasPassword.value ? 'Kata sandi diperbarui!' : 'Kata sandi berhasil dibuat!');
     hasPassword.value = true;
     
     oldPassword.value = '';
     newPassword.value = '';
     confirmPassword.value = '';
-    setTimeout(() => { message.value = '' }, 3000);
+    activeMenu.value = null;
   } catch (error) {
-    messageType.value = 'error';
-    message.value = error.message.includes('Password saat ini salah') ? error.message : 'Gagal: ' + error.message;
+    toastError(error.message);
   } finally {
     isSaving.value = false;
+    stopWatchdog()
   }
 }
 </script>
@@ -574,3 +563,6 @@ const updatePassword = async () => {
   margin-top: 2rem;
 }
 </style>
+
+
+

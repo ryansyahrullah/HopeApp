@@ -48,21 +48,6 @@
               {{ isSubmitting ? 'Mengirim...' : 'Kirim Masukan' }}
             </button>
           </div>
-
-          <!-- Alert Messages -->
-          <transition name="slide-up">
-            <div v-if="successMessage" class="modern-alert success-alert mt-3">
-              <CheckCircle :size="20" class="shrink-0" /> 
-              <span>{{ successMessage }}</span>
-            </div>
-          </transition>
-
-          <transition name="slide-up">
-            <div v-if="errorMessage" class="modern-alert error-alert mt-3">
-              <AlertCircle :size="20" class="shrink-0" /> 
-              <span>{{ errorMessage }}</span>
-            </div>
-          </transition>
         </form>
       </div>
     </div>
@@ -153,14 +138,14 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 import { useAuth } from '@/composables/useAuth'
 import { feedbackService } from '@/services/feedbackService'
+import { useToast } from '@/composables/useToast'
 
 const { isMahasiswa, isAdmin, isDosen, currentUser } = useAuth()
+const { success: toastSuccess, error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 // State Mahasiswa
 const feedbackContent = ref('')
 const isSubmitting = ref(false)
-const successMessage = ref('')
-const errorMessage = ref('')
 
 // State Admin/Dosen
 const feedbacks = ref([])
@@ -181,6 +166,7 @@ const loadFeedbacks = async (isLoadMore = false) => {
     feedbacks.value = []
   }
 
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const newData = await feedbackService.getAllFeedback(currentPage.value, 20)
     
@@ -197,10 +183,11 @@ const loadFeedbacks = async (isLoadMore = false) => {
     }
   } catch (err) {
     console.error('Failed to load feedbacks:', err)
-    alert('Gagal memuat daftar masukan: ' + err.message)
+    toastError('Gagal memuat daftar masukan')
   } finally {
     isLoading.value = false
     isLoadingMore.value = false
+    stopWatchdog()
   }
 }
 
@@ -212,9 +199,7 @@ const submitFeedback = async () => {
   if (!feedbackContent.value.trim()) return
   
   isSubmitting.value = true
-  successMessage.value = ''
-  errorMessage.value = ''
-
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     // Bangun authorName: D001 - Ryan
     const nim = currentUser.value?.student_number || 'Unknown ID'
@@ -225,17 +210,14 @@ const submitFeedback = async () => {
     
     await feedbackService.submitFeedback(authorName, feedbackContent.value)
     
-    successMessage.value = 'Terima kasih atas suaranya! Masukan Anda sangat berharga.'
+    toastSuccess('Terima kasih! Masukan Anda sangat berharga.')
     feedbackContent.value = ''
-    
-    setTimeout(() => {
-      successMessage.value = ''
-    }, 6000)
   } catch (error) {
     console.error('Error submitting feedback:', error)
-    errorMessage.value = 'Mohon maaf, server sedang sibuk. Silakan coba sebentar lagi.'
+    toastError('Gagal mengirim masukan. Coba lagi nanti.')
   } finally {
     isSubmitting.value = false
+    stopWatchdog()
   }
 }
 
@@ -251,16 +233,18 @@ const promptDeleteFeedback = (id) => {
 const executeDeleteFeedback = async () => {
   if (!deleteTargetId.value) return
   isDeletingFeedback.value = true
-  
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     await feedbackService.deleteFeedback(deleteTargetId.value)
     feedbacks.value = feedbacks.value.filter(f => f.id !== deleteTargetId.value)
     showDeleteDialog.value = false
+    toastSuccess('Masukan berhasil dihapus')
   } catch (err) {
     console.error('Failed to delete feedback:', err)
-    alert('Gagal menghapus masukan.')
+    toastError('Gagal menghapus masukan')
   } finally {
     isDeletingFeedback.value = false
+    stopWatchdog()
     deleteTargetId.value = null
   }
 }
@@ -268,9 +252,9 @@ const executeDeleteFeedback = async () => {
 const copyPublicLink = () => {
   const url = `${window.location.origin}/masukan`
   navigator.clipboard.writeText(url).then(() => {
-    alert('Link akses publik berhasil disalin:\n' + url)
+    toast.success('Link akses publik berhasil disalin!')
   }).catch(() => {
-    alert('Gagal menyalin link. Anda dapat membagikan link ini secara manual:\n' + url)
+    toast.error('Gagal menyalin link')
   })
 }
 
@@ -720,4 +704,7 @@ const formatDateTime = (isoString) => {
   }
 }
 </style>
+
+
+
 

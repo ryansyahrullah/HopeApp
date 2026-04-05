@@ -111,13 +111,14 @@ import { profileService } from '@/services/profileService'
 import { useMessageSync } from '@/composables/useMessageSync'
 
 import { useDMBadge } from '@/composables/useDMBadge'
+import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
 const { currentUser } = useAuth()
 const { pendingMessages, addPending } = useMessageSync()
 const { refreshUnreadCount } = useDMBadge()
-
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const otherUserId = computed(() => route.params.id)
 const otherUser = ref(null)
@@ -183,13 +184,16 @@ const fetchOtherUser = async () => {
 
 const loadMessages = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const data = await dmService.getPrivateMessages(otherUserId.value)
     messages.value = data
   } catch (err) {
     console.error('Load messages error:', err)
+    toastError('Gagal memuat pesan: ' + err.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
     await nextTick()
     scrollToBottom()
   }
@@ -239,7 +243,7 @@ const sendMessage = async () => {
     scrollToBottom()
   } catch (err) {
     console.error('Send error:', err)
-    alert('Gagal mengirim pesan.')
+    toast.error('Gagal mengirim pesan: ' + err.message)
     newMessage.value = content
   } finally {
     isSending.value = false
@@ -514,3 +518,6 @@ const formatMessage = (text) => {
   to { transform: rotate(360deg); }
 }
 </style>
+
+
+

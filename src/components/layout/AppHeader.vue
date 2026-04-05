@@ -177,14 +177,19 @@ const handleLogout = async () => {
   font-size: 1.2rem;
   box-shadow: 0 2px 8px rgba(198, 40, 40, 0.4);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
   position: relative;
 }
 
 .avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.5);
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 6px 16px rgba(198, 40, 40, 0.5);
+}
+
+.avatar:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 4px rgba(198, 40, 40, 0.3);
 }
 
 .header-avatar-img {
@@ -296,8 +301,18 @@ const handleLogout = async () => {
   text-align: left;
   cursor: pointer;
   border-radius: 6px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 0.2rem;
+}
+
+.popup-item:hover {
+  background-color: var(--c-bg);
+  transform: translateX(4px);
+}
+
+.popup-item:active {
+  transform: scale(0.97);
+  opacity: 0.8;
 }
 
 .popup-item:last-child {

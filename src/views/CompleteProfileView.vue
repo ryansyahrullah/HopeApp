@@ -57,12 +57,13 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { GraduationCap, CheckCircle, Loader2 } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { profileService } from '@/services/profileService'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const { currentUser, refreshProfile } = useAuth()
+const { success: toastSuccess, error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const isSubmitting = ref(false)
 
@@ -90,6 +91,7 @@ const submitProfile = async () => {
   if (!currentUser.value?.id) return
   
   isSubmitting.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const updates = {
       nim: form.nim,
@@ -107,12 +109,14 @@ const submitProfile = async () => {
     await refreshProfile()
     
     // Pindah ke dashboard
+    toastSuccess('Profil berhasil disimpan!')
     router.replace('/')
   } catch (err) {
     console.error('Gagal menyimpan profil:', err)
-    alert('Terjadi kesalahan saat menyimpan profil. Silakan coba lagi.')
+    toastError('Terjadi kesalahan saat menyimpan profil.')
   } finally {
     isSubmitting.value = false
+    stopWatchdog()
   }
 }
 </script>
@@ -275,3 +279,6 @@ const submitProfile = async () => {
   }
 }
 </style>
+
+
+

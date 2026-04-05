@@ -55,21 +55,25 @@ import { useRouter } from 'vue-router'
 import { profileService } from '@/services/profileService'
 import { User, ChevronRight, Search } from 'lucide-vue-next'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const searchQuery = ref('')
 const mahasiswaList = ref([])
 const isLoading = ref(true)
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const loadMahasiswa = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     mahasiswaList.value = await profileService.getAllStudents()
   } catch (error) {
     console.error('Error loading mahasiswa:', error)
-    alert('Gagal memuat daftar mahasiswa: ' + error.message)
+    toastError('Gagal memuat daftar mahasiswa: ' + error.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
   }
 }
 
@@ -261,3 +265,6 @@ onMounted(() => {
   }
 }
 </style>
+
+
+

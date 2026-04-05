@@ -245,9 +245,11 @@ import { chatService } from '@/services/chatService'
 import { useChatBadge } from '@/composables/useChatBadge'
 import { useMessageSync } from '@/composables/useMessageSync'
 import { askCici } from '@/services/aiService'
+import { useToast } from '@/composables/useToast'
 
 const { currentUser } = useAuth()
 const { resetBadge } = useChatBadge()
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 const { pendingMessages, addPending } = useMessageSync()
 
 const messages = ref([])
@@ -311,15 +313,17 @@ const hardRefresh = () => {
 
 const loadMessages = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const data = await chatService.getMessages(50)
     messages.value = data
     if (data.length < 50) hasOlderMessages.value = false
   } catch (err) {
     console.error(err)
-    alert('Gagal memuat obrolan: ' + err.message)
+    toastError('Gagal memuat obrolan: ' + err.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
     await nextTick()
     scrollToBottom()
   }
@@ -328,6 +332,7 @@ const loadMessages = async () => {
 const loadOlder = async () => {
   if (isLoadingOlder.value || messages.value.length === 0) return
   isLoadingOlder.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   
   const container = messagesContainer.value
   const scrollHeightBefore = container?.scrollHeight || 0
@@ -347,9 +352,10 @@ const loadOlder = async () => {
     }
   } catch (err) {
     console.error(err)
-    alert('Gagal memuat pesan lama: ' + err.message)
+    toastError('Gagal memuat pesan lama: ' + err.message)
   } finally {
     isLoadingOlder.value = false
+    stopWatchdog()
   }
 }
 
@@ -428,22 +434,28 @@ const triggerAiAssistant = async (question, userId) => {
     content: m.content
   }))
   
-  const result = await askCici(question, userId, false, history)
-  
-  if (!result.success && result.error) {
-    // Tampilkan error sebagai local bubble
-    messages.value.push({
-      id: 'error-local-' + Date.now(),
-      user_id: 'system',
-      author_name: 'System',
-      author_roles: ['admin'], // supaya distinct
-      content: `⚠️ Cici gagal merespons: ${result.error}`,
-      created_at: new Date().toISOString()
-    })
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
+  try {
+    const result = await askCici(question, userId, false, history)
+    
+    if (!result.success && result.error) {
+      // Tampilkan error sebagai local bubble
+      messages.value.push({
+        id: 'error-local-' + Date.now(),
+        user_id: 'system',
+        author_name: 'System',
+        author_roles: ['admin'], // supaya distinct
+        content: `⚠️ Cici gagal merespons: ${result.error}`,
+        created_at: new Date().toISOString()
+      })
+    }
+  } catch (err) {
+    console.error('AI Error:', err)
+  } finally {
+    isCiciTyping.value = false
+    stopWatchdog()
+    nextTick(() => scrollToBottom())
   }
-  
-  isCiciTyping.value = false
-  nextTick(() => scrollToBottom())
 }
 
 const showDeleteDialog = ref(false)
@@ -458,15 +470,17 @@ const promptDeleteMessage = (id) => {
 const executeDeleteMessage = async () => {
   if (!deleteTargetId.value) return
   isDeletingMessage.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     await chatService.deleteMessage(deleteTargetId.value)
     messages.value = messages.value.filter(m => m.id !== deleteTargetId.value)
     showDeleteDialog.value = false
   } catch (err) {
     console.error(err)
-    alert('Gagal menghapus pesan: ' + err.message)
+    toastError('Gagal menghapus pesan: ' + err.message)
   } finally {
     isDeletingMessage.value = false
+    stopWatchdog()
     deleteTargetId.value = null
   }
 }
@@ -565,6 +579,7 @@ const saveEdit = async (msgId) => {
   if (!content) return
 
   isSavingEdit.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const updated = await chatService.updateMessage(msgId, content)
     // Update lokal
@@ -575,9 +590,10 @@ const saveEdit = async (msgId) => {
     cancelEdit()
   } catch (err) {
     console.error(err)
-    alert('Gagal mengedit pesan: ' + err.message)
+    toastError('Gagal mengedit pesan: ' + err.message)
   } finally {
     isSavingEdit.value = false
+    stopWatchdog()
   }
 }
 
@@ -1416,3 +1432,6 @@ const formatMessage = (text) => {
   }
 }
 </style>
+
+
+

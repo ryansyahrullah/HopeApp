@@ -184,23 +184,27 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { UserPlus, Search, Edit2, Trash2 } from 'lucide-vue-next'
 import BaseCard from '@/components/common/BaseCard.vue'
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { profileService } from '@/services/profileService'
 import { useAuth } from '@/composables/useAuth'
+import { useToast } from '@/composables/useToast'
 
 const { signUpWithEmail } = useAuth()
+const { success: toastSuccess, error: toastError, warning: toastWarning, startWatchdog, stopWatchdog } = useToast()
 
 const usersList = ref([])
 const searchQuery = ref('')
 const isRegistrationOpen = ref(true)
 
 const loadData = async () => {
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     usersList.value = await profileService.getAllProfiles()
     isRegistrationOpen.value = await profileService.getRegistrationSetting()
   } catch (error) {
     console.error('Failed to load users data', error)
-    alert('Gagal memuat pengguna: ' + error.message)
+    toastError('Gagal memuat daftar pengguna')
+  } finally {
+    stopWatchdog()
   }
 }
 
@@ -209,11 +213,15 @@ onMounted(() => {
 })
 
 watch(isRegistrationOpen, async (newVal) => {
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     await profileService.setRegistrationSetting(newVal)
+    toastSuccess(`Pendaftaran akun sekarang ${newVal ? 'dibuka' : 'ditutup'}`)
   } catch (error) {
     console.error('Failed to update registration setting', error)
-    alert('Gagal mengubah status pendaftaran: ' + error.message)
+    toastError('Gagal mengubah status pendaftaran')
+  } finally {
+    stopWatchdog()
   }
 })
 
@@ -250,6 +258,7 @@ const addUser = async () => {
   }
 
   isAdding.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     // Note: Calling signUp from frontend might log the admin as the new user
     // In production, consider using a Supabase Edge Function to create users on behalf of admin
@@ -262,10 +271,12 @@ const addUser = async () => {
     newUser.password = ''
     newUser.roles = []
     showAddModal.value = false
+    toastSuccess('Pengguna berhasil ditambahkan')
   } catch (e) {
-    addError.value = e.message || 'Gagal menambahkan pengguna'
+    toastError(e.message || 'Gagal menambahkan pengguna')
   } finally {
     isAdding.value = false
+    stopWatchdog()
   }
 }
 
@@ -277,7 +288,7 @@ const toggleRole = async (user, roleName) => {
     if (currentRoles.length > 1) {
       currentRoles.splice(index, 1)
     } else {
-      alert("Pengguna minimal harus memiliki 1 peran (role) aktif.")
+      toast.warning("Pengguna minimal harus memiliki 1 peran aktif.")
       return
     }
   } else {
@@ -287,12 +298,16 @@ const toggleRole = async (user, roleName) => {
   try {
     // Optimistic UI update
     user.roles = currentRoles
+    startWatchdog('memuat terlalu lama, harap refresh!', 7000)
     await profileService.updateProfile(user.id, { roles: currentRoles })
+    toastSuccess('Peran pengguna diperbarui')
   } catch (e) {
     console.error('Failed to update role', e)
     // Revert if failed
     loadData()
-    alert('Gagal mengubah role pengguna: ' + e.message)
+    toastError('Gagal mengubah peran')
+  } finally {
+    stopWatchdog()
   }
 }
 
@@ -327,6 +342,7 @@ const isSaving = ref(false)
 const saveEditUser = async () => {
   if (selectedUser.value) {
     isSaving.value = true
+    startWatchdog('memuat terlalu lama, harap refresh!', 7000)
     try {
       await profileService.updateProfile(selectedUser.value.id, {
         full_name: editUserForm.full_name,
@@ -339,11 +355,13 @@ const saveEditUser = async () => {
       })
       await loadData()
       showEditModal.value = false
+      toastSuccess('Profil pengguna berhasil diperbarui')
     } catch (e) {
        console.error('Failed to update user', e)
-       alert('Gagal menyimpan pengguna: ' + e.message)
+       toastError('Gagal menyimpan perubahan')
     } finally {
-       isSaving.value = false
+      isSaving.value = false
+      stopWatchdog()
     }
   }
 }
@@ -360,16 +378,19 @@ const deleteUser = (user) => {
 const executeDeleteUser = async () => {
   if (!deleteTarget.value) return
   isDeleteLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     await profileService.deleteProfile(deleteTarget.value.id)
     showDeleteDialog.value = false
     deleteTarget.value = null
     await loadData()
+    toastSuccess('Pengguna berhasil dihapus')
   } catch (e) {
     console.error('Failed to delete user', e)
-    alert('Gagal menghapus pengguna: ' + e.message)
+    toastError('Gagal menghapus pengguna')
   } finally {
     isDeleteLoading.value = false
+    stopWatchdog()
   }
 }
 </script>
@@ -620,13 +641,16 @@ input:checked + .slider:before {
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
 }
 .add-user-btn:hover {
   background: #b91c1c;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220,38,38,0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220,38,38,0.25);
+}
+.add-user-btn:active {
+  transform: scale(0.96);
 }
 
 /* Modal */
@@ -756,10 +780,14 @@ input:checked + .slider:before {
   color: var(--c-text-main);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cancel-btn:hover {
   background: var(--c-surface);
+  border-color: var(--c-text-muted);
+}
+.cancel-btn:active {
+  transform: scale(0.96);
 }
 
 .submit-btn {
@@ -773,10 +801,15 @@ input:checked + .slider:before {
   border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .submit-btn:hover {
   background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220,38,38,0.25);
+}
+.submit-btn:active {
+  transform: scale(0.96);
 }
 
 /* Action Buttons in Table */
@@ -794,8 +827,11 @@ input:checked + .slider:before {
   border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--c-text-muted);
+}
+.action-icon-btn:active {
+  transform: scale(0.85);
 }
 .action-icon-btn:hover {
   background: var(--c-bg);
@@ -805,3 +841,6 @@ input:checked + .slider:before {
 .text-danger { color: #dc2626; }
 .text-danger:hover { background: rgba(220,38,38,0.1); }
 </style>
+
+
+

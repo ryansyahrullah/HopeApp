@@ -15,15 +15,15 @@
       <!-- MODE 0: LOGIN DEFAULT -->
       <div v-if="authMode === 'login'" class="form-wrapper animate-fade-in">
         
-        <!-- Feedback Messages (inside card) -->
-        <div v-if="errorMessage" class="feedback-msg error-msg animate-fade-in">
-          <AlertCircle :size="18" /> {{ errorMessage }}
-        </div>
-        <div v-if="successMessage" class="feedback-msg success-msg animate-fade-in">
-          <CheckCircle :size="18" /> {{ successMessage }}
-        </div>
-
         <div class="brand-header">
+          <!-- Feedback Messages (inside card) -->
+          <div v-if="localError" class="feedback-msg error-msg animate-fade-in" style="margin-bottom: 1rem;">
+            <AlertCircle :size="18" /> {{ localError }}
+          </div>
+          <div v-if="localSuccess" class="feedback-msg success-msg animate-fade-in" style="margin-bottom: 1rem;">
+            <CheckCircle :size="18" /> {{ localSuccess }}
+          </div>
+
           <h1 class="brand-logo">HopeApp 希</h1>
           <p class="brand-subtitle">Bahasa Mandarin POLIBAN</p>
         </div>
@@ -92,15 +92,15 @@
            <ChevronLeft :size="18"/> Kembali ke Login
         </button>
 
-        <!-- Feedback Messages (inside card) -->
-        <div v-if="errorMessage" class="feedback-msg error-msg animate-fade-in">
-          <AlertCircle :size="18" /> {{ errorMessage }}
-        </div>
-        <div v-if="successMessage" class="feedback-msg success-msg animate-fade-in">
-          <CheckCircle :size="18" /> {{ successMessage }}
-        </div>
-
         <div class="brand-header" style="text-align: left;">
+          <!-- Feedback Messages -->
+          <div v-if="localError" class="feedback-msg error-msg animate-fade-in" style="margin-bottom: 1rem;">
+            <AlertCircle :size="18" /> {{ localError }}
+          </div>
+          <div v-if="localSuccess" class="feedback-msg success-msg animate-fade-in" style="margin-bottom: 1rem;">
+            <CheckCircle :size="18" /> {{ localSuccess }}
+          </div>
+
           <h2 class="auth-heading">Lupa Sandi?</h2>
           <p class="auth-desc">Masukkan alamat email terdaftar Anda. Kami akan mengirimkan link reset sandi ke email tersebut.</p>
         </div>
@@ -119,11 +119,7 @@
 
     <!-- Turnstile invisible widget (Moved outside dynamic container to prevent VDOM wipe) -->
     <div ref="turnstileContainerRef" key="turnstile-app-widget" class="turnstile-container"></div>
-    
-    <!-- Notif Bantuan Loading -->
-    <AppToast message="Jika loading terus, refresh aja" variant="warning" :duration="8000" position="top" />
   </div>
-
 </template>
 
 <script setup>
@@ -132,12 +128,12 @@ import { useRouter } from 'vue-router'
 import { ChevronLeft, AlertCircle, CheckCircle } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { useTurnstile } from '@/composables/useTurnstile'
-import AppToast from '@/components/common/AppToast.vue'
-
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
-const { signInWithEmail: authSignIn, signInWithGoogle: authGoogleSignIn, resetPassword } = useAuth()
+const { signInWithEmail: authSignIn, signInWithGoogle: authGoogleSignIn, resetPassword: authResetPassword } = useAuth()
 const { turnstileContainerRef, executeTurnstile, resetTurnstile } = useTurnstile()
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const authMode = ref('login') // 'login', 'forgot_email'
 
@@ -151,17 +147,17 @@ const resetEmail = ref('')
 const isProcessing = ref(false)
 
 // Feedback
-const errorMessage = ref('')
-const successMessage = ref('')
-
+const localError = ref('')
+const localSuccess = ref('')
 const clearMessages = () => {
-  errorMessage.value = ''
-  successMessage.value = ''
+  localError.value = ''
+  localSuccess.value = ''
 }
 
 const loginWithEmail = async () => {
   clearMessages()
   isProcessing.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     // Verify Turnstile before login (null = not enabled, proceed without captcha)
     const token = await executeTurnstile()
@@ -171,49 +167,54 @@ const loginWithEmail = async () => {
   } catch (error) {
     resetTurnstile()
     if (error.message?.includes('Invalid login')) {
-      errorMessage.value = 'Email atau password salah.'
+      localError.value = 'Email atau password salah.'
     } else if (error.message?.includes('Email not confirmed')) {
-      errorMessage.value = 'Email belum dikonfirmasi. Cek inbox Anda.'
+      localError.value = 'Email belum dikonfirmasi. Cek inbox Anda.'
     } else if (error.message?.includes('captcha')) {
-      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
+      localError.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
     } else {
-      errorMessage.value = error.message || 'Terjadi kesalahan saat login.'
+      localError.value = error.message || 'Terjadi kesalahan saat login.'
     }
   } finally {
     isProcessing.value = false
+    stopWatchdog()
   }
 }
 
 const loginWithGoogle = async () => {
   clearMessages()
   isProcessing.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     await authGoogleSignIn()
-    // Google OAuth will redirect, so no need to push route
+    // Google OAuth akan redirect, jadi gak perlu push router di sini
   } catch (error) {
-    errorMessage.value = error.message || 'Gagal login dengan Google.'
+    localError.value = error.message || 'Gagal login dengan Google.'
     isProcessing.value = false
+    stopWatchdog()
   }
 }
 
 const sendResetLink = async () => {
   clearMessages()
   isProcessing.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     // Verify Turnstile before sending reset link (null = not enabled)
     const token = await executeTurnstile()
 
-    await resetPassword(resetEmail.value, token)
-    successMessage.value = `Link reset sandi telah dikirim ke ${resetEmail.value}. Cek inbox atau folder spam Anda.`
+    await authResetPassword(resetEmail.value, token)
+    localSuccess.value = `Link reset sandi telah dikirim ke ${resetEmail.value}. Cek inbox atau folder spam Anda.`
   } catch (error) {
     resetTurnstile()
     if (error.message?.includes('captcha')) {
-      errorMessage.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
+      localError.value = 'Verifikasi keamanan gagal. Silakan coba lagi.'
     } else {
-      errorMessage.value = error.message || 'Gagal mengirim link reset.'
+      localError.value = error.message || 'Gagal mengirim link reset.'
     }
   } finally {
     isProcessing.value = false
+    stopWatchdog()
   }
 }
 </script>
@@ -429,7 +430,7 @@ const sendResetLink = async () => {
 }
 
 .primary-btn:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.96);
 }
 
 .primary-btn:disabled {
@@ -475,9 +476,13 @@ const sendResetLink = async () => {
 
 .google-btn:hover:not(:disabled) {
   background-color: var(--c-bg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
   border-color: rgba(198, 40, 40, 0.3);
+}
+
+.google-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
 }
 
 .google-btn:disabled {
@@ -632,3 +637,6 @@ const sendResetLink = async () => {
   }
 }
 </style>
+
+
+

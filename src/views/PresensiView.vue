@@ -70,11 +70,13 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import { Download } from 'lucide-vue-next'
 import * as XLSX from 'xlsx'
+import { useToast } from '@/composables/useToast'
 
 const isLoading = ref(true)
 const meetings = ref([])
 const presensiRecords = ref([])
 const students = ref([])
+const toast = useToast()
 
 const selectedStudentToContact = ref(null)
 const openContactModal = (student) => {
@@ -87,6 +89,7 @@ const sortedMeetings = computed(() => {
 
 const loadMatrix = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     meetings.value = await meetingService.getMeetings()
     presensiRecords.value = await presensiService.getAllPresensi()
@@ -103,9 +106,10 @@ const loadMatrix = async () => {
     
   } catch (e) {
     console.error(e)
-    alert('Gagal memuat rekap presensi: ' + e.message)
+    toast.error('Gagal memuat rekap presensi: ' + e.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
   }
 }
 
@@ -272,3 +276,6 @@ onMounted(() => {
   }
 }
 </style>
+
+
+

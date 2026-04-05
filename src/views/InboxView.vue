@@ -118,6 +118,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 
 const router = useRouter()
 const { currentUser } = useAuth()
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const isLoading = ref(true)
 const conversations = ref([])
@@ -150,14 +151,17 @@ const filteredContacts = computed(() => {
 
 const loadInbox = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     conversations.value = await dmService.getInbox()
     // Muat semua profil di latar belakang untuk pencarian
     allProfiles.value = await profileService.getAllProfiles()
   } catch (err) {
     console.error('Failed to load inbox data:', err)
+    toastError('Gagal memuat kotak masuk: ' + err.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
   }
 }
 
@@ -424,3 +428,6 @@ onMounted(() => {
 
 }
 </style>
+
+
+

@@ -38,10 +38,10 @@ ALTER TABLE public.profiles ADD COLUMN onesignal_id TEXT;
 - Menjalankan `npm install @onesignal/onesignal-vue3` sebagai SDK *client-side*.
 
 ### Kestabilan Profil (Sinkronisasi Token)
-File: `src/views/DashboardView.vue` atau `App.vue` (Global Lifecycle)
-1. **Inisiasi OneSignal:** Melakukan inisiasi library saat komponen global di-_mount_.
+File: `src/composables/useNotifications.js` (Baru)
+1. **Inisiasi OneSignal:** Melakukan inisasi library saat aplikasi di-_mount_.
 2. **Prompts:** Kalau status `Notification.permission` adalah bebas (bukan *denied*), kita picu kemunculan Push Prompts milik OneSignal.
-3. **Capture Subscription:** Segera setelah mahasiswa memencet *Allow*, OneSignal Client akan menghasilkan ID (kadang disebut `Subscription Id` atau dikaitkan via `external_id`).
+3. **Capture Subscription:** Segera setelah mahasiswa memencet *Allow*, OneSignal Client akan menghasilkan ID.
 4. **Sync-up Database:** Menjalankan `supabase.from('profiles').update({ onesignal_id: tokenBaru }).eq('id', currentUser.id)`.
 
 ---
@@ -53,23 +53,27 @@ File: `supabase/functions/notify-chat/index.ts`
 - **Tujuan:** Berkomunikasi secara privat/aman (via server-to-server) dengan API resmi OneSignal.
 - **Workflow:** 
   1. Fungsi membaca *payload JSON* yang diteruskan secara otomatis oleh *Supabase Trigger*.
-  2. Mengekstrak data *Author* (Pengirim) dan *Pesan*.
-  3. Membangun konfigurasi *HTTP Post* ke *API Endpoint OneSignal*: `https://onesignal.com/api/v1/notifications`
-  4. Pengaturan penerima dikonfigurasi menggunakan: *"Tembakkan ke semua `external_id` (users) KECUALI external_id milik si Pengirim"* (Untuk menghindari si pengirim mendapat notifikasi dari dirinya sendiri).
+  2. **Logika Group Chat**: Jika tabel asal adalah `messages`, ambil semua `onesignal_id` kecuali pengirim.
+  3. **Logika Private Chat**: Jika tabel asal adalah `private_messages`, ambil hanya `onesignal_id` milik si penerima.
+  4. Membangun konfigurasi *HTTP Post* ke *OneSignal API*.
+  5. Pengaturan penerima dikonfigurasi menggunakan `include_external_user_ids`.
 
 ---
 
 ## 5. Menyiapkan Tali Pemicu (Database Webhook)
 
 Supabase memiliki fitur "Database Webhooks", yakni mengamati gerak-gerik tabel secara _live_ dan melaporkannya ke suatu URL:
-- **Target Table:** `messages`
-- **Events:** `INSERT` (Hanya trigger jika ada chat masuk baru).
-- **Type:** HTTP Request
-- **Method:** `POST`
-- **URL Target:** Url *Edge Function* `notify-chat` yang telah dideploy pada poin (4) sebelumnya.
-
-### Keuntungan Arsitektur Ini:
-Alur ini sepenuhnya otomatis setelah *frontend* mendelegasikannya. Jika chat grup tiba-tiba aktif dan berisi ratusan pesan per menit, proses penembakan notifikasi hanya ditanggung oleh infrastruktur *Edge Network* Supabase yang bebas kendala dan terlepas (asynchronous), sehingga HP para _client_ (Mahasiswa) dan antarmuka chat tidak terbebani sama sekali!
+- **Webhook 1 (Grup):** Tabel `messages` (INSERT).
+- **Webhook 2 (Pribadi):** Tabel `private_messages` (INSERT).
+- **URL Target:** Url *Edge Function* `notify-chat`.
 
 ---
-*Rencana ini dapat dieksekusi langkah demi langkah ketika parameter OneSignal telah dikumpulkan.*
+
+## 6. Fitur Pendukung & Privasi
+
+1. **Toggle Settings:** Menambahkan kontrol di `SettingsView.vue` untuk mematikan/menyalakan notifikasi secara mandiri.
+2. **Privasi Pesan:** Untuk pesan pribadi, notifikasi akan menggunakan format *"Anda menerima pesan baru dari [Nama]"* tanpa menampilkan isi pesan demi keamanan data.
+3. **Optimasi @mention:** Menambahkan logika agar notifikasi grup diutamakan bagi mereka yang disebut (@nama).
+
+---
+*Rencana ini telah diperbarui berdasarkan kebutuhan Pesan Pribadi dan preferensi pengguna.*

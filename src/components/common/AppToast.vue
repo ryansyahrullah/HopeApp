@@ -1,10 +1,12 @@
 <template>
   <Transition name="toast-fade">
-    <div v-if="visible" class="app-toast-wrapper" :class="{ 'is-top': position === 'top' }" @click="visible = false">
+    <div v-if="visible" class="app-toast-wrapper" :class="[position, { 'is-global': isGlobal }]" @click="hide">
       <div class="app-toast" :class="variant">
         <div class="toast-icon">
-          <Info v-if="variant === 'info'" :size="18" />
-          <AlertCircle v-else :size="18" />
+          <CheckCircle v-if="variant === 'success'" :size="18" />
+          <XCircle v-else-if="variant === 'error'" :size="18" />
+          <AlertCircle v-else-if="variant === 'warning'" :size="18" />
+          <Info v-else :size="18" />
         </div>
         <div class="toast-content">
           <p class="toast-message">{{ message }}</p>
@@ -15,50 +17,42 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { Info, AlertCircle } from 'lucide-vue-next'
+import { CheckCircle, XCircle, AlertCircle, Info } from 'lucide-vue-next'
+import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
-  message: { type: String, required: true },
-  duration: { type: Number, default: 6000 },
-  variant: { type: String, default: 'info' }, // 'info', 'warning'
-  position: { type: String, default: 'bottom' } // 'top', 'bottom' (on mobile)
+  isGlobal: { type: Boolean, default: false }
 })
 
-const visible = ref(false)
-
-onMounted(() => {
-  // Delay slightly to show animation
-  setTimeout(() => {
-    visible.value = true
-    
-    if (props.duration > 0) {
-      setTimeout(() => {
-        visible.value = false
-      }, props.duration)
-    }
-  }, 500)
-})
+const { message, variant, visible, position, hide } = useToast()
 </script>
 
 <style scoped>
 .app-toast-wrapper {
   position: fixed;
-  top: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  z-index: 10000; /* Extremely high to stay on top */
   width: auto;
   max-width: 90vw;
   pointer-events: auto;
   cursor: pointer;
 }
 
+/* Positions */
+.app-toast-wrapper.top {
+  top: 1.5rem;
+}
+
+.app-toast-wrapper.bottom {
+  bottom: 2rem;
+}
+
 .app-toast {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.85rem 1.25rem;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
   background: white;
   border-radius: 100px;
   box-shadow: 
@@ -68,13 +62,11 @@ onMounted(() => {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.app-toast.info {
-  border-left: 4px solid var(--c-info, #2563eb);
-}
-
-.app-toast.warning {
-  border-left: 4px solid var(--c-warning, #d97706);
-}
+/* Variant Styles */
+.app-toast.success { border-left: 4px solid var(--c-success, #10b981); }
+.app-toast.error { border-left: 4px solid var(--c-danger, #ef4444); }
+.app-toast.warning { border-left: 4px solid var(--c-warning, #f59e0b); }
+.app-toast.info { border-left: 4px solid var(--c-info, #3b82f6); }
 
 .toast-icon {
   display: flex;
@@ -83,15 +75,17 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.info .toast-icon { color: var(--c-info, #2563eb); }
-.warning .toast-icon { color: var(--c-warning, #d97706); }
+.success .toast-icon { color: var(--c-success, #10b981); }
+.error .toast-icon { color: var(--c-danger, #ef4444); }
+.warning .toast-icon { color: var(--c-warning, #f59e0b); }
+.info .toast-icon { color: var(--c-info, #3b82f6); }
 
 .toast-content {
   flex: 1;
 }
 
 .toast-message {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--c-text-main, #1f2937);
   margin: 0;
@@ -104,25 +98,16 @@ onMounted(() => {
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
-.toast-fade-enter-from {
-  opacity: 0;
-  transform: translate(-50%, -20px) scale(0.9);
-}
-
+.toast-fade-enter-from,
 .toast-fade-leave-to {
   opacity: 0;
-  transform: translate(-50%, -20px) scale(0.9);
+  transform: translate(-50%, 20px) scale(0.9);
 }
 
+/* Mobile Adjustments */
 @media (max-width: 768px) {
-  .app-toast-wrapper {
-    top: auto;
-    bottom: 5rem; /* Muncul di atas bottom nav mobile */
-  }
-
-  .app-toast-wrapper.is-top {
-    top: 1.5rem;
-    bottom: auto;
+  .app-toast-wrapper.bottom {
+    bottom: 5.5rem; /* Above bottom navigation */
   }
 }
 </style>

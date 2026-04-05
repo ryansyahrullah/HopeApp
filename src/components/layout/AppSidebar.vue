@@ -143,8 +143,9 @@ const totalUnread = computed(() => (groupUnreadCount.value || 0) + (dmUnreadCoun
   border-radius: var(--radius-sm);
   color: var(--c-text-muted);
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .nav-item .icon {
@@ -156,6 +157,11 @@ const totalUnread = computed(() => (groupUnreadCount.value || 0) + (dmUnreadCoun
   background-color: var(--c-bg);
   color: var(--c-text-main);
   transform: translateX(4px);
+}
+
+.nav-item:active {
+  transform: scale(0.96);
+  opacity: 0.8;
 }
 
 .nav-item.router-link-active {
@@ -228,6 +234,12 @@ const totalUnread = computed(() => (groupUnreadCount.value || 0) + (dmUnreadCoun
 
 .nav-cici:hover {
   background: #fdf2f8 !important;
+  transform: translateX(4px);
+}
+
+.nav-cici:active {
+  transform: scale(0.96);
+  opacity: 0.8;
 }
 
 .nav-cici.router-link-active {

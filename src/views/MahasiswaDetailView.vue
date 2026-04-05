@@ -169,10 +169,12 @@ import { ArrowLeft, BookOpen, Edit2, Trash2 } from 'lucide-vue-next'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { profileService } from '@/services/profileService'
 import { useAuth } from '@/composables/useAuth'
+import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 
 const { isAdmin } = useAuth()
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const route = useRoute()
 const router = useRouter()
@@ -223,6 +225,7 @@ const isSaving = ref(false)
 const saveEditMahasiswa = async () => {
   if (!mahasiswa.value) return
   isSaving.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const updated = await profileService.updateProfile(mahasiswa.value.id, {
         full_name: editForm.full_name,
@@ -235,11 +238,13 @@ const saveEditMahasiswa = async () => {
     })
     mahasiswa.value = updated
     showEditModal.value = false
+    toastSuccess('Data mahasiswa berhasil diperbarui')
   } catch (error) {
     console.error('Failed to update student', error)
-    alert('Gagal memperbarui data mahasiswa: ' + error.message)
+    toastError('Gagal memperbarui data mahasiswa: ' + error.message)
   } finally {
     isSaving.value = false
+    stopWatchdog()
   }
 }
 
@@ -253,28 +258,33 @@ const deleteMahasiswa = () => {
 const executeDeleteMahasiswa = async () => {
   if (!mahasiswa.value) return
   isDeleting.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     await profileService.deleteProfile(mahasiswa.value.id)
     showDeleteDialog.value = false
     router.push('/mahasiswa')
+    toastSuccess('Mahasiswa berhasil dihapus')
   } catch (e) {
     console.error('Failed to delete student', e)
-    alert('Gagal menghapus mahasiswa: ' + e.message)
+    toastError('Gagal menghapus mahasiswa: ' + e.message)
   } finally {
     isDeleting.value = false
+    stopWatchdog()
   }
 }
 
 onMounted(async () => {
   const mhsId = route.params.id
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
       mahasiswa.value = await profileService.getProfileById(mhsId)
   } catch (e) {
       console.error(e)
-      alert('Gagal memuat detail mahasiswa: ' + e.message)
+      toastError('Gagal memuat detail mahasiswa: ' + e.message)
   } finally {
       isLoading.value = false
+      stopWatchdog()
   }
 })
 </script>
@@ -700,3 +710,6 @@ onMounted(async () => {
   }
 }
 </style>
+
+
+

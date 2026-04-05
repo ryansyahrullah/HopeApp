@@ -12,12 +12,15 @@
           <component :is="Component" />
         </router-view>
       </main>
+
+      <!-- Global Notification Overlay -->
+      <AppToast is-global />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './composables/useAuth'
@@ -26,20 +29,26 @@ import { useAvatarSync } from './composables/useAvatarSync'
 import { useMessageSync } from './composables/useMessageSync'
 import { useProfileSync } from './composables/useProfileSync'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
-
-
 import AppHeader from '@/components/layout/AppHeader.vue'
+import AppToast from '@/components/common/AppToast.vue'
+import { useToast } from './composables/useToast'
 
 const { initAuth, currentUser } = useAuth()
 const { refreshUnreadCount } = useDMBadge()
 const { processQueue } = useAvatarSync()
 const { syncPending } = useMessageSync()
 const { syncPendingProfile } = useProfileSync()
+const { show, startWatchdog, stopWatchdog } = useToast()
 
 const route = useRoute()
 
 onMounted(async () => {
-  await initAuth()
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
+  try {
+    await initAuth()
+  } finally {
+    stopWatchdog()
+  }
   
   // Sinkronisasi Latar Belakang (Awal Muat)
   processQueue()
@@ -59,18 +68,43 @@ onMounted(async () => {
     if (document.visibilityState === 'visible') {
       console.log('[App] Aplikasi aktif kembali, menyegarkan data...')
       
-      // Refresh Auth & Profile (Soft Hard-Refresh)
-      await initAuth() 
-      
-      // Sinkronisasi lagi
-      processQueue()
-      syncPending()
-      syncPendingProfile()
-      
-      // Refresh Lencana Chat (Inbox)
-      refreshUnreadCount()
+      startWatchdog('memuat terlalu lama, harap refresh!', 7000)
+      try {
+        // Refresh Auth & Profile (Soft Hard-Refresh)
+        await initAuth() 
+        
+        // Sinkronisasi lagi
+        processQueue()
+        syncPending()
+        // Refresh Lencana Chat (Inbox)
+        refreshUnreadCount()
+      } finally {
+        stopWatchdog()
+      }
     }
   })
+})
+
+const showStuckTip = () => {
+  if (route.path === '/' || route.path === '/login') {
+    const pos = route.path === '/' ? 'bottom' : 'top'
+    show('loading terus/stuck(all page), refresh aja', { 
+      variant: 'warning', 
+      duration: 4000,
+      position: pos
+    })
+  }
+}
+
+// Initial load
+onMounted(() => {
+  showStuckTip()
+})
+
+// On navigation
+watch(() => route.path, () => {
+  stopWatchdog()
+  showStuckTip()
 })
 
 
@@ -159,3 +193,6 @@ const isFullscreenRoute = computed(() => {
   }
 }
 </style>
+
+
+

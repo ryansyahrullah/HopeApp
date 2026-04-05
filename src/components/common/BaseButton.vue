@@ -55,10 +55,12 @@ defineEmits(['click']);
   font-weight: 500;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   user-select: none;
   font-family: var(--font-sans);
+  position: relative;
+  overflow: hidden;
 }
 
 .base-btn:focus-visible {
@@ -84,12 +86,13 @@ defineEmits(['click']);
 
 .base-btn--primary:hover:not(:disabled) {
   background-color: var(--c-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(198, 40, 40, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(198, 40, 40, 0.3);
 }
 
 .base-btn--primary:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.96);
+  box-shadow: 0 2px 4px rgba(198, 40, 40, 0.2);
 }
 
 /* Outline Form (Gold/Red Borders) */
@@ -100,7 +103,12 @@ defineEmits(['click']);
 }
 
 .base-btn--outline:hover:not(:disabled) {
-  background-color: rgba(198, 40, 40, 0.05);
+  background-color: rgba(198, 40, 40, 0.08);
+  transform: translateY(-1px);
+}
+
+.base-btn--outline:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
 }
 
 /* Secondary (Gold) */
@@ -110,6 +118,12 @@ defineEmits(['click']);
 }
 .base-btn--secondary:hover:not(:disabled) {
   filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 143, 0, 0.3);
+}
+
+.base-btn--secondary:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
 }
 
 /* Loader Spin (Simple) */

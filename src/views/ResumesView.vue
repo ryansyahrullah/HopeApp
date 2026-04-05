@@ -111,11 +111,13 @@ import ContactModal from '@/components/common/ContactModal.vue'
 import { meetingService } from '@/services/meetingService'
 import { resumeService } from '@/services/resumeService'
 import { profileService } from '@/services/profileService'
+import { useToast } from '@/composables/useToast'
 
 // State Tabs & Selector
 const activeTab = ref('rekap')
 const selectedMeetingId = ref('')
 const selectedStudentToContact = ref(null)
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const openContactModal = (student) => {
   selectedStudentToContact.value = student
@@ -141,6 +143,7 @@ const meetingOptions = computed(() => {
 
 const loadData = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     meetings.value = await meetingService.getMeetings()
     allResumes.value = await resumeService.getAllResumes()
@@ -163,9 +166,10 @@ const loadData = async () => {
     }
   } catch (e) {
     console.error(e)
-    alert('Gagal memuat data resume: ' + e.message)
+    toastError('Gagal memuat data resume: ' + e.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
   }
 }
 
@@ -378,3 +382,6 @@ onMounted(() => {
   }
 }
 </style>
+
+
+

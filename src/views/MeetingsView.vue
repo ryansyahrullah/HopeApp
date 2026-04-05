@@ -193,12 +193,14 @@ import MeetingCard from '@/components/meeting/MeetingCard.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const { isAdmin } = useAuth()
 
 const meetings = ref([])
 const isLoading = ref(true)
+const { success: toastSuccess, error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 // State Sorting (Default descending / terbaru di atas)
 const sortOrder = ref('desc')
@@ -245,6 +247,7 @@ const meetingToDelete = ref(null)
 
 const loadMeetings = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const data = await meetingService.getMeetings()
     meetings.value = data
@@ -257,9 +260,10 @@ const loadMeetings = async () => {
     }
   } catch (error) {
     console.error(error)
-    alert('Gagal memuat daftar pertemuan: ' + error.message)
+    toastError('Gagal memuat daftar pertemuan: ' + error.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
   }
 }
 
@@ -305,6 +309,8 @@ const submitMeeting = async () => {
   }
   
   isSubmitting.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
+  
   try {
     if (isEditing.value) {
       await meetingService.updateMeeting(formData.value.id, {...formData.value})
@@ -312,13 +318,20 @@ const submitMeeting = async () => {
       await meetingService.createMeeting({...formData.value})
     }
     
-    closeAddModal()
+    const actionType = isEditing.value ? 'diperbarui' : 'ditambahkan'
+    
+    // Tutup popup secara paksa tanpa terhalang guard isSubmitting
+    isAddModalOpen.value = false
     await loadMeetings()
+    
+    toastSuccess(`Pertemuan berhasil ${actionType}`)
 
   } catch(e) {
     errorMessage.value = e.message
+    toastError('Gagal menyimpan pertemuan')
   } finally {
     isSubmitting.value = false
+    stopWatchdog()
   }
 }
 
@@ -330,14 +343,19 @@ const openDeleteModal = (meeting) => {
 const confirmDelete = async () => {
   if(!meetingToDelete.value) return
   isDeleting.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
      await meetingService.deleteMeeting(meetingToDelete.value.id)
      isDeleteDialogOpen.value = false
+     toastSuccess('Pertemuan berhasil dihapus')
      await loadMeetings()
   } catch(e) {
      console.error(e)
-     alert('Gagal menghapus pertemuan: ' + e.message)
-  } finally { isDeleting.value = false }
+     toastError('Gagal menghapus pertemuan: ' + e.message)
+  } finally { 
+    isDeleting.value = false 
+    stopWatchdog()
+  }
 }
 
 onMounted(() => {
@@ -476,6 +494,13 @@ textarea.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.mobile-sort-btn:active {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .mobile-meetings-list {
@@ -499,7 +524,8 @@ textarea.form-input {
   border-bottom: 1px solid var(--c-border);
   gap: 1rem;
   background: var(--c-surface);
-  transition: background-color 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
   animation: fadeIn 0.4s ease-out forwards;
   opacity: 0;
 }
@@ -510,6 +536,7 @@ textarea.form-input {
 
 .mobile-meeting-item:active {
   background: var(--c-bg);
+  transform: scale(0.98);
 }
 
 .mobile-session-circle {
@@ -570,6 +597,11 @@ textarea.form-input {
   padding: 0.4rem;
   border-radius: var(--radius-sm);
   color: var(--c-text-muted);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+.m-action-btn:active {
+  transform: scale(0.85);
 }
 .m-action-btn.edit { color: var(--c-info); background: var(--c-info-bg); }
 .m-action-btn.delete { color: var(--c-danger); background: var(--c-danger-bg); }
@@ -589,6 +621,17 @@ textarea.form-input {
   justify-content: center;
   box-shadow: 0 4px 12px rgba(198, 40, 40, 0.4);
   z-index: 30; /* sit above typical content */
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.mobile-fab:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(198, 40, 40, 0.5);
+}
+
+.mobile-fab:active {
+  transform: scale(0.9) rotate(0);
 }
 
 @media (max-width: 480px) {
@@ -597,3 +640,6 @@ textarea.form-input {
   }
 }
 </style>
+
+
+

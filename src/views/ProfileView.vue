@@ -183,6 +183,7 @@ import { resumeService } from '@/services/resumeService'
 import { profileService } from '@/services/profileService'
 import { useAvatarSync } from '@/composables/useAvatarSync'
 import { useProfileSync } from '@/composables/useProfileSync'
+import { useToast } from '@/composables/useToast'
 import BaseCard from '@/components/common/BaseCard.vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -191,6 +192,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 const { currentUser, roleName, isAdmin, isDosen, isMahasiswa, refreshProfile } = useAuth()
 const { isSyncing, enqueueUpload } = useAvatarSync()
 const { enqueueProfileUpdate } = useProfileSync()
+const { success: toastSuccess, error: toastError, info: toastInfo, warning: toastWarning, startWatchdog, stopWatchdog } = useToast()
 
 
 
@@ -234,6 +236,7 @@ const openEditModal = () => {
 const isSaving = ref(false)
 const saveEditProfile = async () => {
   isSaving.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const updates = {
       full_name: editUserForm.full_name
@@ -250,11 +253,13 @@ const saveEditProfile = async () => {
     await profileService.updateProfile(currentUser.value.id, updates)
     await refreshProfile() // Update global auth state profile
     showEditModal.value = false
+    toastSuccess('Profil berhasil diperbaharui')
   } catch (error) {
     console.error('Failed to update profile:', error)
-    alert('Gagal memperbarui profil: ' + error.message)
+    toastError('Gagal memperbarui profil')
   } finally {
     isSaving.value = false
+    stopWatchdog()
   }
 }
 
@@ -273,20 +278,22 @@ const handleAvatarUpload = async (event) => {
 
   // Validate size (2MB)
   if (file.size > 2 * 1024 * 1024) {
-    alert('Ukuran file maksimal adalah 2MB')
+    toast.warning('Ukuran file maksimal adalah 2MB')
     return
   }
 
   isUploading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     // Masukkan ke antrean sinkronisasi (Auto-Sync)
     await enqueueUpload(file)
-    // alert('Foto profil sedang disinkronkan di latar belakang...')
+    toastInfo('Foto profil sedang diunggah...')
   } catch (error) {
     console.error('Upload failed:', error)
-    alert('Gagal memproses foto: ' + error.message)
+    toastError('Gagal memproses foto')
   } finally {
     isUploading.value = false
+    stopWatchdog()
     // Clear input
     if (fileInput.value) fileInput.value.value = ''
   }
@@ -328,7 +335,7 @@ const loadStats = async () => {
     }
   } catch (e) {
     console.error(e)
-    alert('Gagal memuat statistik profil: ' + e.message)
+    toast.error('Gagal memuat statistik profil')
   }
 }
 
@@ -745,3 +752,6 @@ onMounted(() => loadStats())
   }
 }
 </style>
+
+
+

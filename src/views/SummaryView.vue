@@ -102,10 +102,12 @@ import { meetingService } from '@/services/meetingService'
 import { presensiService } from '@/services/presensiService'
 import { resumeService } from '@/services/resumeService'
 import { profileService } from '@/services/profileService'
+import { useToast } from '@/composables/useToast'
 
 const isLoading = ref(true)
 const viewMode = ref('presensi')
 const selectedStudentToContact = ref(null)
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const openContactModal = (student) => {
   selectedStudentToContact.value = student
@@ -118,6 +120,7 @@ const allResumes = ref([])
 
 const loadData = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     meetings.value = await meetingService.getMeetings()
     allPresensi.value = await presensiService.getAllPresensi()
@@ -126,9 +129,10 @@ const loadData = async () => {
     students.value = await profileService.getAllStudents()
   } catch(e) {
     console.error(e)
-    alert('Gagal memuat ringkasan eksekutif: ' + e.message)
+    toastError('Gagal memuat ringkasan eksekutif: ' + e.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
   }
 }
 
@@ -309,3 +313,6 @@ onMounted(() => {
   }
 }
 </style>
+
+
+

@@ -107,9 +107,11 @@ import { useRouter } from 'vue-router'
 import { KeyRound, Eye, EyeOff, AlertCircle, CheckCircle, LogIn } from 'lucide-vue-next'
 import { supabase } from '@/lib/supabase'
 import { useTurnstile } from '@/composables/useTurnstile'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const { turnstileContainerRef, executeTurnstile, resetTurnstile } = useTurnstile()
+const { success: toastSuccess, error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const newPassword = ref('')
 const confirmPassword = ref('')
@@ -145,6 +147,7 @@ const handleReset = async () => {
   }
 
   isProcessing.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     // Verify Turnstile before updating password (null = not enabled)
     await executeTurnstile()
@@ -158,6 +161,7 @@ const handleReset = async () => {
     // Sign out so user must login with new password
     await supabase.auth.signOut()
     isSuccess.value = true
+    toastSuccess('Kata sandi berhasil diperbarui!')
   } catch (error) {
     resetTurnstile()
     if (error.message?.includes('same_password')) {
@@ -171,6 +175,7 @@ const handleReset = async () => {
     }
   } finally {
     isProcessing.value = false
+    stopWatchdog()
   }
 }
 
@@ -528,3 +533,6 @@ const goToLogin = () => {
   }
 }
 </style>
+
+
+

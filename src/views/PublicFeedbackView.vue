@@ -79,12 +79,14 @@ import { ref, onMounted } from 'vue'
 import { MessageSquareDashed, Loader2, Quote } from 'lucide-vue-next'
 import { feedbackService } from '@/services/feedbackService'
 import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
+import { useToast } from '@/composables/useToast'
 
 const feedbacks = ref([])
 const isLoading = ref(true)
 const currentPage = ref(0)
 const hasMore = ref(true)
 const isLoadingMore = ref(false)
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const loadFeedbacks = async (isLoadMore = false) => {
   if (isLoadMore) {
@@ -96,6 +98,7 @@ const loadFeedbacks = async (isLoadMore = false) => {
     feedbacks.value = []
   }
 
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const newData = await feedbackService.getAllFeedback(currentPage.value, 20)
     
@@ -112,10 +115,11 @@ const loadFeedbacks = async (isLoadMore = false) => {
     }
   } catch (err) {
     console.error('Failed to load public feedbacks:', err)
-    alert('Gagal memuat masukan publik: ' + err.message)
+    toastError('Gagal memuat masukan publik: ' + err.message)
   } finally {
     isLoading.value = false
     isLoadingMore.value = false
+    stopWatchdog()
   }
 }
 
@@ -504,3 +508,6 @@ const formatShortDate = (isoString) => {
   animation: fadeInUp 0.5s ease forwards;
 }
 </style>
+
+
+

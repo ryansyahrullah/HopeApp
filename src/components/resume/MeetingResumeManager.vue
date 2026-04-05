@@ -116,6 +116,7 @@ import BaseCard from '@/components/common/BaseCard.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ContactModal from '@/components/common/ContactModal.vue'
+import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   meetingId: {
@@ -125,6 +126,7 @@ const props = defineProps({
 })
 
 const { isAdmin, isDosen, isMahasiswa, roleName, currentUser } = useAuth()
+const { success: toastSuccess, error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const isLoading = ref(true)
 const isSaving = ref(false)
@@ -170,23 +172,39 @@ const loadMahasiswaData = async () => {
     isLoading.value = false
     return
   }
-  const res = await resumeService.getMyResumeByMeeting(props.meetingId, studentId)
-  if (res) {
-    editorContent.value = res.content
-    hasSaved.value = true
-  } else {
-    editorContent.value = ''
-    hasSaved.value = false
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
+  try {
+    const res = await resumeService.getMyResumeByMeeting(props.meetingId, studentId)
+    if (res) {
+      editorContent.value = res.content
+      hasSaved.value = true
+    } else {
+      editorContent.value = ''
+      hasSaved.value = false
+    }
+  } catch (err) {
+    console.error(err)
+    toastError('Gagal memuat data resume: ' + err.message)
+  } finally {
+    isLoading.value = false
+    stopWatchdog()
   }
-  isLoading.value = false
 }
 
 const loadAdminData = async () => {
   isLoading.value = true
-  const records = await resumeService.getAllResumesByMeeting(props.meetingId)
-  adminResumes.value = records
-  allStudents.value = await profileService.getAllStudents()
-  isLoading.value = false
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
+  try {
+    const records = await resumeService.getAllResumesByMeeting(props.meetingId)
+    adminResumes.value = records
+    allStudents.value = await profileService.getAllStudents()
+  } catch (err) {
+    console.error(err)
+    toastError('Gagal memuat rekap resume: ' + err.message)
+  } finally {
+    isLoading.value = false
+    stopWatchdog()
+  }
 }
 
 const simpanResume = async () => {
@@ -196,19 +214,21 @@ const simpanResume = async () => {
 
   isSaving.value = true
   saveSuccess.value = false
-  
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const saved = await resumeService.saveResume(props.meetingId, studentId, editorContent.value)
     if(saved) {
        hasSaved.value = true
        saveSuccess.value = true
+       toastSuccess('Resume berhasil dikumpulkan!')
        setTimeout(() => { saveSuccess.value = false }, 3000)
     }
   } catch (error) {
      console.error(error)
-     alert('Gagal menyimpan resume: ' + error.message)
+     toastError('Gagal menyimpan resume: ' + error.message)
   } finally {
      isSaving.value = false
+     stopWatchdog()
   }
 }
 
@@ -340,3 +360,6 @@ watch(roleName, () => initialize())
   }
 }
 </style>
+
+
+

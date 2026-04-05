@@ -145,8 +145,10 @@ import { SendHorizontal, Loader2, Trash2, ArrowLeft, MoreVertical, RefreshCcw } 
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { askCici } from '@/services/aiService'
+import { useToast } from '@/composables/useToast'
 
 const { currentUser } = useAuth()
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const messages = ref([])
 const newMessage = ref('')
@@ -276,6 +278,7 @@ const sendMessage = async () => {
   isCiciTyping.value = true
   scrollToBottom()
   
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const result = await askCici(content, userId, true, history) // isPrivate = true
     
@@ -297,8 +300,10 @@ const sendMessage = async () => {
     }
   } catch (e) {
     console.error(e)
+    toastError('Gagal memuat respons Cici: ' + e.message)
   } finally {
     isCiciTyping.value = false
+    stopWatchdog()
     scrollToBottom()
     nextTick(() => inputField.value?.focus())
   }
@@ -840,3 +845,6 @@ const sendMessage = async () => {
   }
 }
 </style>
+
+
+

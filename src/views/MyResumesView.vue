@@ -47,10 +47,12 @@ import { meetingService } from '@/services/meetingService'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import MeetingResumeManager from '@/components/resume/MeetingResumeManager.vue'
+import { useToast } from '@/composables/useToast'
 
 const isLoading = ref(true)
 const selectedMeetingId = ref('')
 const meetings = ref([])
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const sortedMeetings = computed(() => {
   return [...meetings.value].sort((a,b) => a.meeting_number - b.meeting_number)
@@ -65,6 +67,7 @@ const meetingOptions = computed(() => {
 
 const loadData = async () => {
    isLoading.value = true
+   startWatchdog('memuat terlalu lama, harap refresh!', 7000)
    try {
       meetings.value = await meetingService.getMeetings()
       
@@ -74,9 +77,10 @@ const loadData = async () => {
       }
    } catch (e) {
       console.error(e)
-      alert('Gagal memuat sesi pertemuan: ' + e.message)
+      toastError('Gagal memuat sesi pertemuan: ' + e.message)
    } finally {
       isLoading.value = false
+      stopWatchdog()
    }
 }
 
@@ -140,3 +144,6 @@ onMounted(() => loadData())
   border-radius: var(--radius-md);
 }
 </style>
+
+
+

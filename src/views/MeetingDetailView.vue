@@ -32,14 +32,8 @@
             <span class="date-text" style="display:flex; align-items:center; gap:6px"><Calendar :size="15" /> {{ formattedDate }}</span>
           </div>
           <h1 class="title">{{ meeting.title }}</h1>
-          <p class="topic">{{ meeting.topic }}</p>
         </div>
         
-        <!-- Action Buttons Admin -->
-        <div v-if="isAdmin" class="admin-actions">
-           <BaseButton variant="outline" size="sm" @click="openEditModal" style="display:flex; align-items:center; gap:0.4rem"><Edit :size="16" /> Edit Sesi</BaseButton>
-           <BaseButton variant="outline" size="sm" @click="handleDelete" style="color:var(--c-danger); border-color:var(--c-danger); display:flex; align-items:center; gap:0.4rem"><Trash2 :size="16" /> Hapus</BaseButton>
-        </div>
       </header>
 
       <!-- ==============================================
@@ -51,12 +45,7 @@
            <span class="m-date-text"><Calendar :size="12" /> {{ formattedDate }}</span>
         </div>
         <h1 class="m-session-title">{{ meeting.title }}</h1>
-        <p class="m-session-topic">{{ meeting.topic }}</p>
         
-        <div v-if="isAdmin" class="m-admin-actions">
-           <button class="m-icon-action edit" @click="openEditModal"><Edit :size="16"/> Edit</button>
-           <button class="m-icon-action delete" @click="handleDelete"><Trash2 :size="16"/> Hapus</button>
-        </div>
       </div>
 
       <!-- Tabs Navigation -->
@@ -82,6 +71,11 @@
           <div class="video-container">
             <YouTubeEmbed :url="meeting.video_url" />
           </div>
+          
+          <div class="video-description-box" v-if="meeting.topic">
+            <h3 class="desc-heading">Deskripsi Materi</h3>
+            <p class="desc-text">{{ meeting.topic }}</p>
+          </div>
           <div class="video-meta" v-if="isAdmin">
             <BaseButton variant="outline" size="sm">Edit Link Video</BaseButton>
           </div>
@@ -102,63 +96,17 @@
     
     <!-- Not Found -->
     <EmptyState v-else title="Pertemuan tidak ditemukan" description="ID pertemuan mungkin salah atau sudah dihapus." />
-
-    <!-- Modal Delete Confirm -->
-    <BaseModal v-model="isDeleteDialogOpen" title="Konfirmasi Hapus">
-      <p style="margin-bottom:1.5rem;">Apakah kamu yakin ingin menghapus sesi <strong>{{ meeting?.title }}</strong>? Data absensi dan resume yang terkait sesi ini akan hilang.</p>
-      <div style="display:flex; gap:1rem; justify-content:flex-end;">
-         <BaseButton variant="outline" @click="isDeleteDialogOpen = false">Batal</BaseButton>
-         <BaseButton variant="primary" style="background-color:var(--c-danger);" @click="confirmDelete" :disabled="isDeleting">
-            {{ isDeleting ? 'Menghapus...' : 'Ya, Hapus' }}
-         </BaseButton>
-      </div>
-    </BaseModal>
-
-    <!-- Modal Edit Sesi -->
-    <BaseModal v-model="isEditModalOpen" title="Edit Sesi Pertemuan">
-      <form @submit.prevent="submitEdit">
-        <div class="form-group mb-1">
-          <label class="form-label">Sesi Ke-</label>
-          <input type="number" v-model="form.meeting_number" class="form-input" required min="1" />
-        </div>
-        <div class="form-group mb-1">
-          <label class="form-label">Judul Materi</label>
-          <input type="text" v-model="form.title" class="form-input" required placeholder="Contoh: Pengenalan Pinyin" />
-        </div>
-        <div class="form-group mb-1">
-          <label class="form-label">Deskripsi / Topik</label>
-          <textarea v-model="form.topic" class="form-input" required rows="3" placeholder="Garis besar yang akan dipelajari..."></textarea>
-        </div>
-        <div class="form-group mb-1">
-          <label class="form-label">Tanggal Sesi</label>
-          <input type="date" v-model="form.meeting_date" class="form-input" required />
-        </div>
-        <div class="form-group mb-2">
-          <label class="form-label">Link YouTube Materi</label>
-          <input type="url" v-model="form.video_url" class="form-input" placeholder="https://youtube.com/watch?v=..." />
-        </div>
-        <div v-if="editError" class="alert-error mb-2" style="display: flex; align-items: center; gap: 0.5rem">
-          <AlertCircle :size="16" /> {{ editError }}
-        </div>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-          <BaseButton type="button" variant="outline" @click="isEditModalOpen = false">Batal</BaseButton>
-          <BaseButton type="submit" variant="primary" :disabled="isSaving">
-            {{ isSaving ? 'Menyimpan...' : 'Simpan Perubahan' }}
-          </BaseButton>
-        </div>
-      </form>
-    </BaseModal>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Video, ClipboardCheck, BookText, Calendar, Edit, Trash2, AlertCircle, ArrowLeft } from 'lucide-vue-next'
+import { Video, ClipboardCheck, BookText, Calendar, ArrowLeft } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { meetingService } from '@/services/meetingService'
+import { useToast } from '@/composables/useToast'
 
-import BaseModal from '@/components/common/BaseModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -169,6 +117,7 @@ import MeetingResumeManager from '@/components/resume/MeetingResumeManager.vue'
 const route = useRoute()
 const router = useRouter()
 const { roleName, isAdmin } = useAuth()
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const meeting = ref(null)
 const isLoading = ref(true)
@@ -195,69 +144,20 @@ const formattedDate = computed(() => {
 
 const loadDetail = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const data = await meetingService.getMeetingById(route.params.id)
     meeting.value = data
   } catch (err) {
     console.error(err)
-    alert('Gagal memuat detail pertemuan: ' + err.message)
+    toastError('Gagal memuat detail pertemuan: ' + err.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
   }
 }
 
-// Logic Delete
-const isDeleteDialogOpen = ref(false)
-const isDeleting = ref(false)
 
-const handleDelete = () => {
-  isDeleteDialogOpen.value = true
-}
-
-const confirmDelete = async () => {
-  isDeleting.value = true
-  try {
-     await meetingService.deleteMeeting(route.params.id)
-     isDeleteDialogOpen.value = false
-     router.push('/meetings') // Redirect ke daftar
-  } catch(e) {
-     console.error(e)
-     alert('Gagal menghapus pertemuan: ' + e.message)
-  } finally { isDeleting.value = false }
-}
-
-// Logic Edit
-const isEditModalOpen = ref(false)
-const isSaving = ref(false)
-const editError = ref('')
-const form = ref({
-  meeting_number: 1,
-  title: '',
-  topic: '',
-  meeting_date: '',
-  video_url: ''
-})
-
-const openEditModal = () => {
-  if(!meeting.value) return
-  form.value = { ...meeting.value }
-  editError.value = ''
-  isEditModalOpen.value = true
-}
-
-const submitEdit = async () => {
-  isSaving.value = true
-  editError.value = ''
-  try {
-     const updated = await meetingService.updateMeeting(route.params.id, form.value)
-     meeting.value = updated
-     isEditModalOpen.value = false
-  } catch(e) {
-     editError.value = e.message
-  } finally {
-     isSaving.value = false
-  }
-}
 
 onMounted(() => {
   loadDetail()
@@ -285,10 +185,7 @@ onMounted(() => {
   margin-bottom: 2.5rem;
 }
 
-.admin-actions {
-  display: flex;
-  gap: 0.5rem;
-}
+
 
 .badge-wrapper {
   display: flex;
@@ -362,13 +259,34 @@ onMounted(() => {
   border-radius: 4px 4px 0 0;
 }
 
-.tab-pane {
-  min-height: 300px;
-}
-
 .video-container {
   max-width: 900px; /* Lebar wajar biar gak terlalu gede di layar Desktop ultrawide */
   margin: 0 auto;
+}
+
+.video-description-box {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 1.5rem;
+  background-color: var(--c-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.desc-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--c-text-main);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.desc-text {
+  font-size: 0.95rem;
+  color: var(--c-text-muted);
+  line-height: 1.6;
 }
 
 .video-meta {
@@ -513,34 +431,7 @@ onMounted(() => {
   line-height: 1.5;
 }
 
-.m-admin-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px dashed var(--c-border);
-}
 
-.m-icon-action {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.5rem;
-  border-radius: var(--radius-sm);
-  border: none;
-}
-.m-icon-action.edit {
-  background-color: var(--c-info-bg);
-  color: var(--c-info);
-}
-.m-icon-action.delete {
-  background-color: var(--c-danger-bg);
-  color: var(--c-danger);
-}
 
 @media (max-width: 768px) {
   .tabs-nav {
@@ -567,3 +458,6 @@ onMounted(() => {
   }
 }
 </style>
+
+
+

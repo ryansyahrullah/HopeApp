@@ -355,9 +355,6 @@
         </div>
       </div>
       </template>
-
-      <!-- Notif Bantuan Loading -->
-      <AppToast message="loading terus/stuck(all page), refresh aja" variant="warning" :duration="8000" />
   </div>
 </template>
 
@@ -372,9 +369,9 @@ import { useAuth } from '@/composables/useAuth'
 import { useChatBadge } from '@/composables/useChatBadge'
 import { useDMBadge } from '@/composables/useDMBadge'
 import { dashboardService } from '@/services/dashboardService'
+import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import AppToast from '@/components/common/AppToast.vue'
 import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 
 
@@ -382,6 +379,7 @@ import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 const { roleName, isAdmin, isDosen, isMahasiswa, currentUser } = useAuth()
 const { unreadCount: groupUnreadCount } = useChatBadge()
 const { dmUnreadCount } = useDMBadge()
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const totalUnread = computed(() => (groupUnreadCount.value || 0) + (dmUnreadCount.value || 0))
 
@@ -404,6 +402,7 @@ const mhsStats = ref({ attendancePercent: 0, totalHadir: 0, missingResumes: 0 })
 
 const fetchDashboardData = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     if (isAdmin.value || isDosen.value) {
       adminStats.value = await dashboardService.getAdminStats()
@@ -415,9 +414,10 @@ const fetchDashboardData = async () => {
     }
   } catch (error) {
     console.error("Gagal memuat dashboard", error)
-    alert('Gagal memuat ringkasan dashboard: ' + error.message)
+    toastError('Gagal memuat ringkasan dashboard: ' + error.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
   }
 }
 
@@ -544,11 +544,17 @@ onMounted(() => {
   text-decoration: none;
   background: transparent;
   border: none;
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
 }
 
 .shortcut-item:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+}
+
+.shortcut-item:active {
+  transform: scale(0.95);
+  opacity: 0.8;
 }
 
 .shortcut-icon {
@@ -854,3 +860,6 @@ onMounted(() => {
   }
 }
 </style>
+
+
+

@@ -128,6 +128,7 @@ import { presensiService } from '@/services/presensiService'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   meetingId: {
@@ -137,6 +138,7 @@ const props = defineProps({
 })
 
 const { isAdmin, isDosen, roleName, currentUser } = useAuth()
+const { success: toastSuccess, error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const isLoading = ref(true)
 const isSaving = ref(false)
@@ -151,15 +153,17 @@ const myRecord = computed(() => {
 
 const loadData = async () => {
   isLoading.value = true
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     const data = await presensiService.getPresensiByMeeting(props.meetingId)
     // Deep copy agar edit tidak langsung bocor ke memori global
     localRecords.value = JSON.parse(JSON.stringify(data))
   } catch (err) {
     console.error(err)
-    alert('Gagal memuat data presensi: ' + err.message)
+    toastError('Gagal memuat data presensi: ' + err.message)
   } finally {
     isLoading.value = false
+    stopWatchdog()
   }
 }
 
@@ -169,15 +173,18 @@ const simpanPresensi = async () => {
   
   isSaving.value = true
   saveSuccess.value = false
+  startWatchdog('memuat terlalu lama, harap refresh!', 7000)
   try {
     await presensiService.savePresensiBatch(props.meetingId, dataToSave)
     saveSuccess.value = true
+    toastSuccess('Data presensi berhasil disimpan!')
     setTimeout(() => { saveSuccess.value = false }, 3000)
   } catch (err) {
     console.error(err)
-    alert('Gagal menyimpan presensi: ' + err.message)
+    toastError('Gagal menyimpan presensi: ' + err.message)
   } finally {
     isSaving.value = false
+    stopWatchdog()
   }
 }
 
@@ -374,3 +381,6 @@ h3 {
   }
 }
 </style>
+
+
+
