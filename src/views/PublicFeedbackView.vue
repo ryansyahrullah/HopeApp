@@ -2,8 +2,16 @@
   <div class="public-feedback-page animate-fade-in">
     <!-- HERO SECTON BRAND -->
     <div class="header-banner">
-      <!-- Translate Widget at Top Right -->
-      <div id="google_translate_element" class="translate-widget"></div>
+      <!-- Header Actions (Desktop) -->
+      <div class="header-actions">
+        <div id="google_translate_element" class="translate-widget"></div>
+        
+        <button class="login-nav-btn" @click="$router.push(currentUser ? '/' : '/login')">
+          <LayoutDashboard v-if="currentUser" :size="18" />
+          <LogIn v-else :size="18" />
+          <span>{{ currentUser ? 'Dashboard' : 'Masuk' }}</span>
+        </button>
+      </div>
       
       <div class="brand">
         <h1 class="zh font-display">HopeApp 希</h1>
@@ -76,10 +84,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { MessageSquareDashed, Loader2, Quote } from 'lucide-vue-next'
+import { MessageSquareDashed, Loader2, Quote, LogIn, LayoutDashboard } from 'lucide-vue-next'
+import { useAuth } from '@/composables/useAuth'
 import { feedbackService } from '@/services/feedbackService'
 import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 import { useToast } from '@/composables/useToast'
+
+const { currentUser } = useAuth()
 
 const feedbacks = ref([])
 const isLoading = ref(true)
@@ -231,11 +242,49 @@ const formatShortDate = (isoString) => {
 }
 
 /* Customizing Google Translate Dropdown tightly on top right */
-.translate-widget {
+.header-actions {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  z-index: 10;
+  top: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 100;
+}
+
+.translate-widget {
+  position: relative;
+  min-width: 160px; /* Ensure space for Google Translate */
+  display: flex;
+  justify-content: flex-end;
+}
+
+.login-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.login-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.login-nav-btn:active {
+  transform: scale(0.95);
 }
 
 :deep(.goog-te-gadget-simple) {
@@ -478,15 +527,26 @@ const formatShortDate = (isoString) => {
     padding: 2rem 1rem;
   }
   
-  .translate-widget {
-    order: 2;
+  .header-actions {
     position: relative;
     top: 0;
     right: 0;
-    margin-top: 1.5rem;
-    margin-bottom: 0;
+    width: 100%;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    order: 2;
+  }
+  
+  .translate-widget {
+    margin: 0;
+  }
+  
+  .login-nav-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
   }
   
   .masonry-grid {
