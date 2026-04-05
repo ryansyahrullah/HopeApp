@@ -252,9 +252,9 @@ const executeDeleteFeedback = async () => {
 const copyPublicLink = () => {
   const url = `${window.location.origin}/masukan`
   navigator.clipboard.writeText(url).then(() => {
-    toast.success('Link akses publik berhasil disalin!')
+    toastSuccess('Link akses publik berhasil disalin!')
   }).catch(() => {
-    toast.error('Gagal menyalin link')
+    toastError('Gagal menyalin link')
   })
 }
 

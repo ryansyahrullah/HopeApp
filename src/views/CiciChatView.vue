@@ -331,7 +331,7 @@ const sendMessage = async () => {
   box-shadow: 0 4px 20px rgba(244, 114, 182, 0.08);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 1000;
   flex-shrink: 0;
 }
 
