@@ -114,6 +114,7 @@ import { ArrowLeft, Loader2, MessageSquare, Plus, Search } from 'lucide-vue-next
 import { dmService } from '@/services/dmService'
 import { profileService } from '@/services/profileService'
 import { useAuth } from '@/composables/useAuth'
+import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 
 const router = useRouter()

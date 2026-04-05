@@ -76,7 +76,7 @@ const isLoading = ref(true)
 const meetings = ref([])
 const presensiRecords = ref([])
 const students = ref([])
-const toast = useToast()
+const { error: toastError, startWatchdog, stopWatchdog } = useToast()
 
 const selectedStudentToContact = ref(null)
 const openContactModal = (student) => {
@@ -106,7 +106,7 @@ const loadMatrix = async () => {
     
   } catch (e) {
     console.error(e)
-    toast.error('Gagal memuat rekap presensi: ' + e.message)
+    toastError('Gagal memuat rekap presensi: ' + e.message)
   } finally {
     isLoading.value = false
     stopWatchdog()

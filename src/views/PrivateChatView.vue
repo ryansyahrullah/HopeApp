@@ -243,7 +243,7 @@ const sendMessage = async () => {
     scrollToBottom()
   } catch (err) {
     console.error('Send error:', err)
-    toast.error('Gagal mengirim pesan: ' + err.message)
+    toastError('Gagal mengirim pesan: ' + err.message)
     newMessage.value = content
   } finally {
     isSending.value = false
